@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cluster Sort Demo — Ethan Chen</title>
+  <meta name="description" content="Live side-by-side demo: distributed bubble-sort-and-merge on one node vs a 4-node cluster, running in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea; --ink: #161513; --ink-2: #57534b; --line: #d6d0c3; --accent: #c2410c;
+      --term: #12110f; --term-2: #1c1a17; --term-ink: #e8e3d8; --term-dim: #8a8478; --term-line: #2e2b26;
+      --ok: #4ade80; --info: #67c7d9; --warn: #fbbf24; --busy: #f97316;
+      --gutter: clamp(1rem, 0.5rem + 2.5vw, 3rem);
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) { --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #f97316; --term: #0a0a09; --term-2: #161513; }
+    }
+    :root[data-theme="dark"] { --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #f97316; --term: #0a0a09; --term-2: #161513; }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.6 "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { max-width: 1400px; margin-inline: auto; padding-inline: var(--gutter); }
+
+    header.top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: 4rem; border-bottom: 1px solid var(--line); }
+    header.top a { text-decoration: none; font-family: var(--mono); font-size: .85rem; color: var(--ink-2); }
+    header.top a:hover { color: var(--ink); }
+
+    .intro { padding-block: clamp(2rem, 5vw, 4rem) 1.5rem; display: grid; gap: 1rem; }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    h1 { margin: 0; font: 400 clamp(2.2rem, 1.2rem + 4vw, 4.5rem)/1 "Instrument Serif", Georgia, serif; letter-spacing: -0.02em; }
+    .intro p { margin: 0; max-width: 62ch; color: var(--ink-2); }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem 1.5rem; padding-block: 1.25rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .field { display: grid; gap: .3rem; }
+    .field span { font-family: var(--mono); font-size: .75rem; color: var(--ink-2); }
+    select, button { font: 500 .95rem "IBM Plex Sans", sans-serif; color: var(--ink); }
+    select { padding: .55rem 2rem .55rem .75rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+    .run { padding: .6rem 1.4rem; border: 0; border-radius: 6px; background: var(--ink); color: var(--bg); cursor: pointer; display: inline-flex; gap: .5rem; align-items: center; }
+    .run:hover { background: var(--accent); }
+    .run:disabled { opacity: .5; cursor: progress; }
+    .controls .note { margin-left: auto; font-family: var(--mono); font-size: .75rem; color: var(--ink-2); max-width: 46ch; }
+
+    .result { min-height: 3.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding-block: 1rem; }
+    .result strong { font: 400 clamp(1.6rem, 1rem + 2vw, 2.6rem)/1 "Instrument Serif", serif; color: var(--accent); }
+    .result span { color: var(--ink-2); }
+
+    .panes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(.75rem, 2vw, 1.5rem); padding-bottom: 3rem; }
+    @media (max-width: 900px) { .panes { grid-template-columns: 1fr; } }
+
+    .term { background: var(--term); color: var(--term-ink); border-radius: 10px; overflow: hidden; border: 1px solid var(--term-line); display: flex; flex-direction: column; min-width: 0; }
+    .term__bar { display: flex; align-items: center; gap: .75rem; padding: .6rem .9rem; background: var(--term-2); border-bottom: 1px solid var(--term-line); }
+    .dots { display: flex; gap: 6px; } .dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3732; }
+    .dots i:nth-child(1) { background: #ff5f57; } .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
+    .term__title { font-family: var(--mono); font-size: .8rem; color: var(--term-dim); flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .term__time { font-family: var(--mono); font-size: .8rem; color: var(--term-ink); min-width: 5ch; text-align: right; }
+
+    .nodes { display: flex; flex-wrap: wrap; gap: .4rem .9rem; padding: .6rem .9rem; border-bottom: 1px solid var(--term-line); font-family: var(--mono); font-size: .75rem; color: var(--term-dim); }
+    .node { display: inline-flex; align-items: center; gap: .4rem; }
+    .node b { width: 8px; height: 8px; border-radius: 50%; background: #3a3732; transition: background .15s, box-shadow .15s; }
+    .node.busy b { background: var(--busy); box-shadow: 0 0 8px var(--busy); }
+    .node.done b { background: var(--ok); }
+    .node em { font-style: normal; color: var(--term-ink); }
+    .progress { height: 2px; background: var(--term-line); }
+    .progress div { height: 100%; width: 0; background: var(--busy); transition: width .2s; }
+
+    .log { margin: 0; padding: .9rem; height: clamp(320px, 52vh, 560px); overflow: auto; font: 400 .78rem/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+    .log .dim { color: var(--term-dim); } .log .ok { color: var(--ok); } .log .info { color: var(--info); } .log .warn { color: var(--warn); }
+    .log .head { color: var(--info); font-weight: 500; } .log .bad { color: #f87171; }
+    .log .cursor::after { content: "▋"; animation: blink 1s steps(1) infinite; color: var(--term-dim); }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .explain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; padding-block: 2rem 4rem; border-top: 1px solid var(--line); }
+    .explain h2 { margin: 0 0 .4rem; font-family: var(--mono); font-size: .75rem; font-weight: 400; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    .explain p { margin: 0; color: var(--ink-2); font-size: .95rem; }
+    @media (max-width: 760px) { .explain { grid-template-columns: 1fr; } .controls .note { margin-left: 0; } }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+  <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top wrap">
+    <a href="../#/work/cluster">← Back to case study</a>
+    <a href="https://github.com/chenethan123/Distributed-Computing-Cluster" target="_blank" rel="noopener">Source on GitHub ↗</a>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <span class="eyebrow">Live demo · Distributed Compute Cluster</span>
+      <h1>One node vs. four.</h1>
+      <p>
+        Both terminals run the same pipeline as the real cluster: split the input into chunks, bubble-sort
+        each chunk on a worker node, then merge sorted files on the master as they come back. Here each
+        "node" is a Web Worker running on your device, so the timings are real.
+      </p>
+    </section>
+
+    <div class="controls">
+      <label class="field"><span>Numbers to sort</span>
+        <select id="size">
+          <option value="100000">100,000</option>
+          <option value="200000">200,000</option>
+          <option value="400000" selected>400,000</option>
+        </select>
+      </label>
+      <label class="field"><span>Ints per chunk</span>
+        <select id="chunk">
+          <option value="5000">5,000</option>
+          <option value="10000">10,000</option>
+          <option value="20000" selected>20,000</option>
+        </select>
+      </label>
+      <button class="run" id="run" type="button">▶ Run both</button>
+      <p class="note" id="note"></p>
+    </div>
+
+    <div class="result" id="result" aria-live="polite"><span>Press run to start both terminals at once.</span></div>
+
+    <div class="panes">
+      <section class="term" id="single" aria-label="Single node terminal">
+        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 — single node</span><span class="term__time">0.00s</span></div>
+        <div class="nodes"></div><div class="progress"><div></div></div>
+        <pre class="log"><span class="dim">$ </span><span class="cursor"></span></pre>
+      </section>
+      <section class="term" id="cluster" aria-label="Cluster terminal">
+        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 — 4-node cluster</span><span class="term__time">0.00s</span></div>
+        <div class="nodes"></div><div class="progress"><div></div></div>
+        <pre class="log"><span class="dim">$ </span><span class="cursor"></span></pre>
+      </section>
+    </div>
+
+    <section class="explain">
+      <div><h2>Split</h2><p>The master reads the input and cuts it into fixed-size chunks, one job per chunk, just like <code>cluster.submit(chunk_file)</code> with dispy.</p></div>
+      <div><h2>Sort</h2><p>Each free node takes the next job and bubble-sorts it. Bubble sort is O(n²), so chunk size matters a lot. Try 5,000 to see why.</p></div>
+      <div><h2>Merge &amp; verify</h2><p>The master merges sorted chunks two at a time as they arrive, then checks the result is in order and identical to a reference sort, the same as <code>sort -n | diff</code>.</p></div>
+    </section>
+  </main>
+
+<script>
+// The worker: same bubble sort as nodeSortJob in binarySort.py
+const WORKER_SRC = `
+onmessage = (e) => {
+  const { id, buf } = e.data;
+  const lst = new Int32Array(buf);
+  const n = lst.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n - 1 - i; j++) {
+      if (lst[j] > lst[j + 1]) { const t = lst[j]; lst[j] = lst[j + 1]; lst[j + 1] = t; }
+    }
+  }
+  postMessage({ id, buf: lst.buffer }, [lst.buffer]);
+};`;
+const workerUrl = URL.createObjectURL(new Blob([WORKER_SRC], { type: 'text/javascript' }));
+
+const $ = (s, el = document) => el.querySelector(s);
+const fmt = (n) => n.toLocaleString('en-US');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const cores = navigator.hardwareConcurrency || 4;
+$('#note').textContent = cores >= 6
+  ? `Your device reports ${cores} cores, enough for both runs to go at once.`
+  : `Your device reports ${cores} cores, so both runs share them and the cluster speedup will look smaller than on a real cluster.`;
+
+// Seeded RNG so every run sorts the same data
+function makeData(n) {
+  let s = 42 >>> 0;
+  const rand = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return (t ^ (t >>> 14)) >>> 0; };
+  const a = new Int32Array(n);
+  for (let i = 0; i < n; i++) a[i] = rand() | 0;
+  return a;
+}
+
+function mergeTwo(a, b) {
+  const out = new Int32Array(a.length + b.length);
+  let i = 0, j = 0, k = 0;
+  while (i < a.length && j < b.length) out[k++] = a[i] <= b[j] ? a[i++] : b[j++];
+  while (i < a.length) out[k++] = a[i++];
+  while (j < b.length) out[k++] = b[j++];
+  return out;
+}
+
+class Terminal {
+  constructor(el) {
+    this.el = el; this.log = $('.log', el); this.time = $('.term__time', el);
+    this.nodesEl = $('.nodes', el); this.bar = $('.progress div', el);
+    this.buffer = []; this.raf = null;
+  }
+  reset(nodeNames) {
+    this.log.innerHTML = '';
+    this.nodesEl.innerHTML = nodeNames.map((n) => `<span class="node" data-n="${n}"><b></b>${n} <em></em></span>`).join('');
+    this.bar.style.width = '0';
+    this.time.textContent = '0.00s';
+  }
+  line(text, cls = '') { this.buffer.push([text, cls]); if (!this.raf) this.raf = requestAnimationFrame(() => this.flush()); }
+  flush() {
+    const frag = document.createDocumentFragment();
+    for (const [text, cls] of this.buffer) {
+      const span = document.createElement('span'); if (cls) span.className = cls; span.textContent = text + '\n'; frag.append(span);
+    }
+    this.buffer = []; this.raf = null;
+    $('.cursor', this.log)?.remove();
+    this.log.append(frag);
+    const c = document.createElement('span'); c.className = 'cursor'; this.log.append(c);
+    this.log.scrollTop = this.log.scrollHeight;
+  }
+  node(name, state, count) {
+    const n = $(`[data-n="${name}"]`, this.nodesEl);
+    n.className = 'node ' + state; if (count != null) $('em', n).textContent = `×${count}`;
+  }
+}
+
+async function runPipeline(term, nodeNames, data, chunkSize, label) {
+  term.reset(nodeNames);
+  const workers = nodeNames.map((name) => ({ name, w: new Worker(workerUrl), busy: false, jobs: 0 }));
+  const N = data.length;
+  const t0 = performance.now();
+  const tick = setInterval(() => { term.time.textContent = ((performance.now() - t0) / 1000).toFixed(2) + 's'; }, 50);
+
+  term.line(`$ python cluster_sort.py`, 'dim');
+  term.line(`[MASTER] Binary sort pipeline starting on ${nodeNames.length} node(s): ${nodeNames.join(', ')}`);
+  term.line(`[MASTER] Input : data1.set (${fmt(N)} ints)`);
+  term.line(`[MASTER] Chunk size: ${fmt(chunkSize)} ints`);
+  term.line('');
+
+  // Split into jobs
+  const queue = [];
+  for (let i = 0, id = 0; i < N; i += chunkSize, id++) {
+    queue.push({ id, buf: data.slice(i, i + chunkSize).buffer });
+    term.line(`[MASTER] Chunk ${String(id).padStart(3)}: ${fmt(Math.min(chunkSize, N - i))} ints → chunk_${id}.bin  [job submitted]`, 'dim');
+  }
+  const totalJobs = queue.length;
+  term.line(`\n[MASTER] All ${totalJobs} jobs submitted. Waiting for results...\n`);
+
+  const ready = []; let done = 0; let merges = 0;
+  await new Promise((resolve) => {
+    const dispatch = () => {
+      for (const node of workers) {
+        if (node.busy || !queue.length) continue;
+        const job = queue.shift(); node.busy = true; term.node(node.name, 'busy');
+        node.w.onmessage = (e) => {
+          node.busy = false; node.jobs++; done++;
+          term.node(node.name, queue.length ? '' : 'done', node.jobs);
+          ready.push({ name: `chunk_${e.data.id}.sorted.bin`, arr: new Int32Array(e.data.buf) });
+          term.line(`[MASTER] Job ${String(e.data.id).padStart(3)} done on ${node.name} (${fmt(e.data.buf.byteLength / 4)} ints) | ready files: ${ready.length}`, 'info');
+          term.bar.style.width = (done / totalJobs * 100) + '%';
+          // Merge pairs as they arrive, like the master loop in binarySort.py
+          while (ready.length >= 2) {
+            const a = ready.shift(), b = ready.shift(); merges++;
+            const final = done === totalJobs && ready.length === 0;
+            const out = final ? 'sorted_output.txt' : `merged_tmp_${merges}.bin`;
+            term.line(`[MASTER] ${final ? 'FINAL merge' : 'Binary merge'} #${merges}: ${a.name} + ${b.name} → ${out}`, final ? 'warn' : '');
+            ready.push({ name: out, arr: mergeTwo(a.arr, b.arr) });
+          }
+          if (done === totalJobs) resolve(); else dispatch();
+        };
+        node.w.postMessage(job, [job.buf]);
+      }
+    };
+    dispatch();
+  });
+
+  const elapsed = (performance.now() - t0) / 1000;
+  clearInterval(tick);
+  term.time.textContent = elapsed.toFixed(2) + 's';
+  workers.forEach((n) => n.w.terminate());
+  const result = ready[0].arr;
+
+  term.line('');
+  term.line(`[MASTER] Sort complete!`, 'ok');
+  term.line(`[MASTER] Total integers sorted: ${fmt(result.length)}`);
+  term.line(`[MASTER] Jobs per node: ${workers.map((n) => `${n.name}=${n.jobs}`).join('  ')}`);
+  term.line(`[MASTER] Total time: ${elapsed.toFixed(2)}s`, 'ok');
+  term.line('');
+
+  // Verify, same checks as run.sh
+  await sleep(250);
+  term.line(`━━━ VERIFY ━━━`, 'head');
+  term.line(`$ sort -n -c sorted_output.txt`, 'dim');
+  let inOrder = true;
+  for (let i = 1; i < result.length; i++) if (result[i - 1] > result[i]) { inOrder = false; break; }
+  term.line(inOrder ? '✓ sorted_output.txt is in ascending order' : '✗ not sorted', inOrder ? 'ok' : 'bad');
+  await sleep(250);
+  term.line(`$ head -${N} data1.set | sort -n | diff - sorted_output.txt`, 'dim');
+  const ref = data.slice().sort();
+  let same = ref.length === result.length;
+  for (let i = 0; same && i < ref.length; i++) if (ref[i] !== result[i]) same = false;
+  term.line(same ? `✓ VERIFIED: identical to sort -n (${fmt(N)} numbers, no differences)` : '✗ MISMATCH', same ? 'ok' : 'bad');
+  return elapsed;
+}
+
+const single = new Terminal($('#single'));
+const cluster = new Terminal($('#cluster'));
+single.reset(['standalone']);
+cluster.reset(['node1', 'node2', 'node3', 'node4']);
+
+$('#run').addEventListener('click', async () => {
+  const btn = $('#run'); btn.disabled = true; btn.textContent = 'Running…';
+  const n = +$('#size').value, chunk = +$('#chunk').value;
+  $('#result').innerHTML = `<span>Generating ${fmt(n)} random integers…</span>`;
+  await sleep(30);
+  const data = makeData(n);
+  $('#result').innerHTML = `<span>Sorting ${fmt(n)} integers in ${Math.ceil(n / chunk)} chunks on both setups…</span>`;
+  const [ts, tc] = await Promise.all([
+    runPipeline(single, ['standalone'], data, chunk),
+    runPipeline(cluster, ['node1', 'node2', 'node3', 'node4'], data, chunk),
+  ]);
+  $('#result').innerHTML = `<strong>${(ts / tc).toFixed(1)}× faster</strong><span>with 4 nodes: ${tc.toFixed(2)}s vs ${ts.toFixed(2)}s on one node. Both outputs verified.</span>`;
+  btn.disabled = false; btn.textContent = '▶ Run again';
+  document.body.dataset.done = '1';
+});
+if (new URLSearchParams(location.search).has('autorun')) $('#run').click();
+</script>
+</body>
+</html>

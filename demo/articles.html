@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Article Scraper Demo — Ethan Chen</title>
+  <meta name="description" content="Live demo: pick a topic, scrape real news from RSS feeds, score relevance, and export to a spreadsheet, all in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea; --ink: #161513; --ink-2: #57534b; --line: #d6d0c3; --accent: #15803d; --accent-ink: #fff;
+      --term: #12110f; --term-2: #1c1a17; --term-ink: #e8e3d8; --term-dim: #8a8478; --term-line: #2e2b26;
+      --sheet: #ffffff; --sheet-head: #f3f3f3; --sheet-grid: #e2e2e2; --sheet-ink: #1f1f1f; --sheet-dim: #6b6b6b; --sheet-sel: #e6f4ea;
+      --link: #1a5fd0;
+      --gutter: clamp(1rem, 0.5rem + 2.5vw, 3rem);
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #22c55e; --accent-ink: #0b1a10; --term: #0a0a09; --term-2: #161513;
+        --sheet: #1b1b1b; --sheet-head: #242424; --sheet-grid: #333; --sheet-ink: #e6e6e6; --sheet-dim: #9a9a9a; --sheet-sel: #173323; --link: #7aa7ff;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #22c55e; --accent-ink: #0b1a10; --term: #0a0a09; --term-2: #161513;
+      --sheet: #1b1b1b; --sheet-head: #242424; --sheet-grid: #333; --sheet-ink: #e6e6e6; --sheet-dim: #9a9a9a; --sheet-sel: #173323; --link: #7aa7ff;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.6 "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { max-width: 1400px; margin-inline: auto; padding-inline: var(--gutter); }
+
+    header.top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: 4rem; border-bottom: 1px solid var(--line); }
+    header.top a { text-decoration: none; font-family: var(--mono); font-size: .85rem; color: var(--ink-2); }
+    header.top a:hover { color: var(--ink); }
+
+    .intro { padding-block: clamp(2rem, 5vw, 4rem) 1.5rem; display: grid; gap: 1rem; }
+    .eyebrow { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    h1 { margin: 0; font: 400 clamp(2.2rem, 1.2rem + 4vw, 4.5rem)/1 "Instrument Serif", Georgia, serif; letter-spacing: -0.02em; }
+    .intro p { margin: 0; max-width: 64ch; color: var(--ink-2); }
+
+    .cats { margin: 0; padding: 1.25rem 0 0; border: 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem; }
+    .cats legend { float: left; width: 100%; padding: 0; margin-bottom: .6rem; font-family: var(--mono); font-size: .75rem; color: var(--ink-2); }
+    .cat { position: relative; }
+    .cat input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+    .cat span { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem .95rem; border: 1px solid var(--line); border-radius: 999px; font-size: .92rem; font-weight: 500; transition: border-color .15s, background-color .15s, color .15s; }
+    .cat span small { font-family: var(--mono); font-size: .72rem; font-weight: 400; color: var(--ink-2); }
+    .cat:hover span { border-color: var(--ink); }
+    .cat input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+    .cat input:checked + span small { color: inherit; opacity: .7; }
+    .cat input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .cat input:disabled { cursor: not-allowed; }
+    .cat-desc { margin: 0; padding: .75rem 0 1.25rem; color: var(--ink-2); font-size: .95rem; min-height: 1.6em; }
+    .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem 1.5rem; padding-block: 1.25rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .field { display: grid; gap: .3rem; }
+    .field span { font-family: var(--mono); font-size: .75rem; color: var(--ink-2); }
+    select, button { font: 500 .95rem "IBM Plex Sans", sans-serif; color: var(--ink); }
+    select { padding: .55rem 2rem .55rem .75rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+    .btn { padding: .6rem 1.2rem; border-radius: 6px; cursor: pointer; display: inline-flex; gap: .5rem; align-items: center; border: 1px solid var(--line); background: transparent; }
+    .btn:hover:not(:disabled) { border-color: var(--ink); }
+    .btn--primary { border: 0; background: var(--ink); color: var(--bg); }
+    .btn--primary:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .downloads { display: flex; gap: .5rem; margin-left: auto; }
+    @media (max-width: 700px) { .downloads { margin-left: 0; } }
+
+    .stats { display: flex; flex-wrap: wrap; gap: .5rem 2rem; padding-block: 1rem; font-family: var(--mono); font-size: .8rem; color: var(--ink-2); min-height: 3.4rem; align-items: center; }
+    .stats b { color: var(--ink); font-weight: 500; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding-bottom: 4rem; }
+
+    /* Terminal */
+    .term { background: var(--term); color: var(--term-ink); border-radius: 10px; overflow: hidden; border: 1px solid var(--term-line); }
+    .bar { display: flex; align-items: center; gap: .75rem; padding: .55rem .9rem; background: var(--term-2); border-bottom: 1px solid var(--term-line); }
+    .dots { display: flex; gap: 6px; } .dots i { width: 11px; height: 11px; border-radius: 50%; }
+    .dots i:nth-child(1) { background: #ff5f57; } .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
+    .bar__title { font-family: var(--mono); font-size: .78rem; color: var(--term-dim); flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar__meta { font-family: var(--mono); font-size: .78rem; min-width: 5ch; text-align: right; }
+    .log { margin: 0; padding: .8rem .9rem; height: 230px; overflow: auto; font: 400 .76rem/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; }
+    .log .dim { color: var(--term-dim); } .log .ok { color: #4ade80; } .log .err { color: #e08273; } .log .head { color: #67c7d9; font-weight: 500; } .log .warn { color: #fbbf24; }
+
+    /* Spreadsheet */
+    .sheet { background: var(--sheet); color: var(--sheet-ink); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .sheet__bar { display: flex; align-items: center; gap: .75rem; padding: .5rem .9rem; border-bottom: 1px solid var(--sheet-grid); font-size: .82rem; }
+    .sheet__icon { width: 18px; height: 22px; border-radius: 2px; background: #1e8e3e; position: relative; flex: none; }
+    .sheet__icon::after { content: ""; position: absolute; inset: 7px 4px 5px; border: 1.5px solid #fff; border-radius: 1px; background:
+      linear-gradient(#fff, #fff) 50% 0 / 1.5px 100% no-repeat, linear-gradient(#fff, #fff) 0 50% / 100% 1.5px no-repeat; }
+    .sheet__name { font-weight: 500; }
+    .sheet__status { margin-left: auto; font-family: var(--mono); font-size: .75rem; color: var(--sheet-dim); }
+    .formula { display: flex; align-items: center; gap: .6rem; padding: .3rem .9rem; border-bottom: 1px solid var(--sheet-grid); font-family: var(--mono); font-size: .75rem; color: var(--sheet-dim); white-space: nowrap; overflow: hidden; }
+    .formula b { font-weight: 500; color: var(--sheet-ink); min-width: 2.5rem; }
+    .grid-wrap { overflow: auto; max-height: 560px; }
+    table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: .8rem; }
+    th, td { border-right: 1px solid var(--sheet-grid); border-bottom: 1px solid var(--sheet-grid); padding: .3rem .55rem; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    thead th { position: sticky; top: 0; z-index: 2; background: var(--sheet-head); color: var(--sheet-dim); font-weight: 400; text-align: center; font-size: .72rem; padding-block: .2rem; }
+    tbody th, thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--sheet-head); color: var(--sheet-dim); font-weight: 400; text-align: center; width: 2.8rem; font-size: .72rem; }
+    thead th:first-child { z-index: 3; }
+    tbody tr.hdr td { font-weight: 600; background: var(--sheet); }
+    tbody tr.new td { animation: flash 1.2s ease-out; }
+    @keyframes flash { from { background: var(--sheet-sel); } }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.title { max-width: 520px; }
+    td.kw { max-width: 300px; color: var(--sheet-dim); }
+    td.url { max-width: 360px; color: var(--sheet-dim); }
+    td a { color: var(--link); text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    .empty td { color: var(--sheet-dim); }
+    .bar-score { display: inline-block; width: 36px; height: 6px; border-radius: 3px; background: var(--sheet-grid); margin-left: .4rem; vertical-align: middle; overflow: hidden; }
+    .bar-score i { display: block; height: 100%; background: #1e8e3e; }
+
+    .explain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; padding-block: 2rem 4rem; border-top: 1px solid var(--line); }
+    .explain h2 { margin: 0 0 .4rem; font-family: var(--mono); font-size: .75rem; font-weight: 400; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    .explain p { margin: 0; color: var(--ink-2); font-size: .95rem; }
+    .explain code { font-size: .85em; }
+    @media (max-width: 760px) { .explain { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+  <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top wrap">
+    <a href="../#/work/scraping">← Back to case study</a>
+    <a href="https://github.com/chenethan123/article-scraper" target="_blank" rel="noopener">Source on GitHub ↗</a>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <span class="eyebrow">Live demo · Article Scraper</span>
+      <h1>Pick a topic. Get today’s news, scraped live.</h1>
+      <p>
+        Choose a category and this runs the scraper’s pipeline in your browser against that category’s real RSS feeds:
+        fetch, parse, clean, score each article with the same keywords and weights as the Dart code, dedupe,
+        then append the results to a sheet you can download. Every row links to the original article.
+      </p>
+    </section>
+
+    <fieldset class="cats" id="cats">
+      <legend>Category</legend>
+      <!-- Filled from CATEGORIES -->
+    </fieldset>
+    <p class="cat-desc" id="cat-desc" aria-live="polite"></p>
+
+    <div class="controls">
+      <label class="field"><span>Min relevance</span>
+        <select id="min">
+          <option value="0.3">0.3</option>
+          <option value="0.5" selected>0.5</option>
+          <option value="0.7">0.7</option>
+          <option value="0.9">0.9</option>
+        </select>
+      </label>
+      <label class="field"><span>Max articles</span>
+        <select id="max">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </label>
+      <button class="btn btn--primary" id="run" type="button">▶ Scrape now</button>
+      <div class="downloads">
+        <button class="btn" id="dl-xlsx" type="button" disabled>⤓ .xlsx</button>
+        <button class="btn" id="dl-csv" type="button" disabled>⤓ .csv</button>
+      </div>
+    </div>
+
+    <div class="stats" id="stats" aria-live="polite"><span>Press “Scrape now” to pull live articles.</span></div>
+
+    <div class="layout">
+      <section class="term" aria-label="Scraper log">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="bar__title">scraper_cli — live</span><span class="bar__meta" id="timer">0.0s</span></div>
+        <pre class="log" id="log"><span class="dim" id="cmd">$ dart run bin/scraper_cli.dart --category finance --summary --xlsx finance_news.xlsx</span>
+</pre>
+      </section>
+
+      <section class="sheet" aria-label="Spreadsheet output">
+        <div class="sheet__bar"><span class="sheet__icon" aria-hidden="true"></span><span class="sheet__name" id="sheet-name">finance_news.xlsx</span><span class="sheet__status" id="sheet-status">Articles · 0 rows</span></div>
+        <div class="formula"><b id="cell-ref">A1</b><span id="cell-val">Published (UTC)</span></div>
+        <div class="grid-wrap">
+          <table>
+            <thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th></tr></thead>
+            <tbody id="rows">
+              <tr class="hdr"><th>1</th><td>Published (UTC)</td><td>Title</td><td>Source</td><td>Category</td><td>Relevance</td><td>Keywords</td><td>Link</td><td>URL</td></tr>
+              <tr class="empty"><th>2</th><td colspan="8">Waiting for the first batch…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="explain">
+      <div><h2>Fetch</h2><p>Some feeds (ESPN, Wired, NASA, the New York Times, CNBC) let browsers read them directly. Browsers block cross-site reads of the rest, so they go through <code>rss2json</code> (10 newest items per feed), with <code>allorigins</code> as a fallback. The real CLI fetches every feed directly.</p></div>
+      <div><h2>Score</h2><p>Each category has its own keywords and topic groups; the weights are shared. Articles score for keyword matches, headline matches, topic coverage and density, plus priority tickers for finance, the same as <code>content_analyzer.dart</code>. Categories live in <code>categories.dart</code>.</p></div>
+      <div><h2>Export</h2><p>Rows are appended in batches with the same columns as the CLI’s <code>--xlsx</code> and Google Sheets export. Download the result as .xlsx or .csv. Each article has a clickable link.</p></div>
+    </section>
+  </main>
+
+<script>
+// Exported from lib/config/categories.dart: same keywords, topic groups and tickers as the CLI
+const CATEGORIES = {"finance": {"name": "Finance & markets", "description": "Earnings, the Fed, economic data, deals and market moves", "keywords": ["earnings", "revenue", "profit", "loss", "sales", "income", "eps", "ebitda", "margin", "growth", "decline", "cash flow", "stock", "share", "market", "trading", "price", "valuation", "market cap", "volume", "volatility", "index", "futures", "inflation", "deflation", "gdp", "unemployment", "jobs report", "consumer price index", "cpi", "ppi", "retail sales", "housing", "manufacturing", "services", "pmi", "economic growth", "federal reserve", "fed", "interest rates", "rate cut", "rate hike", "monetary policy", "quantitative easing", "tapering", "fomc", "jerome powell", "central bank", "treasury yields", "merger", "acquisition", "ipo", "dividend", "buyback", "split", "spinoff", "restructuring", "bankruptcy", "delisting", "analyst", "rating", "upgrade", "downgrade", "price target", "recommendation", "outlook", "forecast", "consensus", "sec", "filing", "regulation", "lawsuit", "settlement", "investigation", "compliance", "antitrust", "sanctions", "guidance", "outlook", "strategy", "partnership", "contract", "product launch", "expansion", "layoffs", "hiring", "supply chain", "trade war", "tariffs", "brexit", "recession", "recovery", "stimulus", "bailout", "debt ceiling", "budget", "fiscal policy", "technology", "healthcare", "energy", "finance", "real estate", "commodities", "oil prices", "gold", "crypto", "bitcoin", "nasdaq", "dow", "sp500", "s&p", "nyse", "wall street", "dow jones", "russell", "vix", "bond", "treasury", "investment", "portfolio", "hedge fund", "mutual fund", "etf", "pension fund", "institutional investor", "retail investor"], "topics": [["Federal Reserve", "Fed", "interest rates", "inflation", "GDP", "unemployment", "economic data", "recession", "economic growth", "monetary policy"], ["stock market", "Wall Street", "NYSE", "NASDAQ", "S&P 500", "Dow Jones", "market volatility", "trading volume", "market cap"], ["earnings", "merger", "acquisition", "IPO", "bankruptcy", "SEC", "regulatory", "lawsuit", "investigation", "dividend", "buyback", "guidance"], ["global economy", "international trade", "tariffs", "trade war", "economic recovery", "stimulus", "supply chain", "commodities", "oil prices"], ["Federal Reserve", "Fed", "Jerome Powell", "FOMC", "rate cut", "rate hike", "quantitative easing", "treasury yields"]], "priorityTerms": {"AAPL": "Apple Inc", "MSFT": "Microsoft", "AMZN": "Amazon", "TSLA": "Tesla", "NVDA": "NVIDIA", "SPY": "S&P 500"}}, "technology": {"name": "Technology", "description": "AI, software, chips, startups, security and big tech", "keywords": ["artificial intelligence", "machine learning", "neural network", "chatbot", "language model", "openai", "anthropic", "deepmind", "generative", "software", "app", "open source", "developer", "programming", "api", "cloud", "operating system", "update", "browser", "platform", "chip", "semiconductor", "processor", "gpu", "smartphone", "iphone", "android", "laptop", "hardware", "data center", "quantum computing", "cybersecurity", "hack", "breach", "vulnerability", "ransomware", "malware", "encryption", "privacy", "data leak", "startup", "funding round", "venture capital", "tech giant", "antitrust", "apple", "google", "microsoft", "amazon", "meta", "nvidia", "tesla", "robot", "autonomous", "self-driving", "virtual reality", "augmented reality", "blockchain", "crypto", "satellite internet", "5g", "electric vehicle"], "topics": [["artificial intelligence", "machine learning", "AI model", "chatbot", "language model", "OpenAI", "Anthropic", "DeepMind"], ["chip", "semiconductor", "GPU", "processor", "data center", "NVIDIA", "TSMC"], ["cybersecurity", "hack", "breach", "ransomware", "vulnerability", "malware", "privacy"], ["startup", "funding round", "venture capital", "acquisition", "IPO", "valuation"], ["iPhone", "Android", "smartphone", "laptop", "app store", "operating system"]], "priorityTerms": {}}, "science": {"name": "Science & space", "description": "Research, discoveries, space missions, climate and the natural world", "keywords": ["study", "research", "researchers", "scientists", "discovery", "experiment", "journal", "peer-reviewed", "published in", "findings", "evidence", "nasa", "space", "mission", "astronaut", "telescope", "galaxy", "planet", "moon", "mars", "orbit", "rocket", "launch", "asteroid", "black hole", "james webb", "spacex", "exoplanet", "climate", "climate change", "global warming", "carbon", "emissions", "ocean", "species", "ecosystem", "biodiversity", "fossil", "evolution", "earthquake", "volcano", "glacier", "physics", "quantum", "particle", "chemistry", "molecule", "atom", "genome", "dna", "gene", "cell", "biology", "neuroscience"], "topics": [["NASA", "space", "astronaut", "telescope", "rocket", "Mars", "Moon", "orbit", "SpaceX"], ["climate", "climate change", "global warming", "emissions", "carbon", "ocean", "glacier"], ["species", "evolution", "fossil", "ecosystem", "biodiversity", "dinosaur"], ["physics", "quantum", "particle", "chemistry", "molecule"], ["genome", "DNA", "gene", "cell", "neuroscience", "brain"]], "priorityTerms": {}}, "health": {"name": "Health & medicine", "description": "Medical research, public health, drugs, mental health and nutrition", "keywords": ["health", "medical", "medicine", "doctor", "patients", "hospital", "treatment", "therapy", "diagnosis", "symptoms", "surgery", "clinical trial", "cancer", "diabetes", "heart disease", "stroke", "alzheimer", "dementia", "obesity", "infection", "virus", "covid", "flu", "vaccine", "outbreak", "drug", "fda", "approval", "pharmaceutical", "prescription", "antibiotic", "weight loss", "ozempic", "insurance", "medicare", "medicaid", "public health", "cdc", "world health organization", "pandemic", "mental health", "depression", "anxiety", "sleep", "stress", "nutrition", "diet", "exercise", "fitness", "smoking", "alcohol"], "topics": [["cancer", "tumor", "chemotherapy", "oncology"], ["vaccine", "virus", "outbreak", "pandemic", "infection", "COVID", "flu"], ["FDA", "drug", "clinical trial", "approval", "pharmaceutical"], ["mental health", "depression", "anxiety", "therapy", "sleep"], ["diet", "nutrition", "exercise", "obesity", "weight loss"]], "priorityTerms": {}}, "sports": {"name": "Sports", "description": "Scores, trades, injuries and the major leagues", "keywords": ["nfl", "nba", "mlb", "nhl", "mls", "ncaa", "premier league", "champions league", "world cup", "olympics", "super bowl", "world series", "playoffs", "final", "game", "match", "season", "win", "loss", "score", "goal", "touchdown", "home run", "championship", "tournament", "title", "record", "coach", "player", "quarterback", "pitcher", "striker", "rookie", "trade", "free agent", "contract", "draft", "signing", "transfer", "injury", "injured", "suspended", "football", "basketball", "baseball", "soccer", "hockey", "tennis", "golf", "boxing", "ufc", "formula 1", "cricket", "rugby"], "topics": [["NFL", "quarterback", "touchdown", "Super Bowl", "football"], ["NBA", "basketball", "playoffs", "three-pointer"], ["MLB", "baseball", "home run", "pitcher", "World Series"], ["Premier League", "Champions League", "soccer", "World Cup", "striker", "transfer"], ["trade", "free agent", "draft", "contract", "signing", "injury"]], "priorityTerms": {}}, "world": {"name": "World & politics", "description": "Elections, governments, diplomacy and conflicts around the world", "keywords": ["government", "president", "prime minister", "minister", "parliament", "congress", "senate", "election", "vote", "campaign", "policy", "law", "supreme court", "white house", "opposition", "protest", "diplomacy", "summit", "talks", "treaty", "agreement", "ambassador", "united nations", "nato", "european union", "sanctions", "foreign minister", "war", "conflict", "ceasefire", "military", "troops", "attack", "missile", "strike", "peace", "refugees", "humanitarian", "crisis", "ukraine", "russia", "china", "israel", "gaza", "iran", "india", "europe", "africa", "middle east", "latin america"], "topics": [["election", "vote", "campaign", "ballot", "polls"], ["war", "ceasefire", "military", "troops", "missile", "attack"], ["United Nations", "NATO", "European Union", "summit", "treaty", "diplomacy"], ["refugees", "humanitarian", "aid", "crisis", "famine"], ["president", "prime minister", "parliament", "Congress", "Supreme Court"]], "priorityTerms": {}}};
+const MIN_CONTENT_LENGTH = 50;
+
+// Feeds per category. Finance uses the subset of its 31 feeds that a browser can reach;
+// the others use every feed from categories.dart. "direct" feeds send Access-Control-Allow-Origin: *
+const FEEDS = {
+  finance: [
+    ['CNBC', 'https://www.cnbc.com/id/100003114/device/rss/rss.html', 'direct'],
+    ['Wall Street Journal', 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml'],
+    ['Bloomberg Markets', 'https://feeds.bloomberg.com/markets/news.rss'],
+    ['The Motley Fool', 'https://www.fool.com/feeds/index.aspx'],
+    ['Axios', 'https://api.axios.com/feed/'],
+    ['BBC Business', 'https://feeds.bbci.co.uk/news/business/rss.xml'],
+    ['Fortune', 'https://fortune.com/feed/'],
+    ['Federal Reserve', 'https://www.federalreserve.gov/feeds/press_all.xml'],
+    ['TechCrunch', 'https://techcrunch.com/feed/'],
+    ['Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index'],
+    ['HousingWire', 'https://www.housingwire.com/feed/'],
+  ],
+  technology: [
+    ['TechCrunch', 'https://techcrunch.com/feed/'],
+    ['Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index'],
+    ['Wired', 'https://www.wired.com/feed/rss', 'direct'],
+    ['Hacker News', 'https://hnrss.org/frontpage'],
+    ['NYT Technology', 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', 'direct'],
+  ],
+  science: [
+    ['NASA', 'https://www.nasa.gov/news-release/feed/', 'direct'],
+    ['ScienceDaily', 'https://www.sciencedaily.com/rss/all.xml'],
+    ['Phys.org', 'https://phys.org/rss-feed/'],
+    ['New Scientist', 'https://www.newscientist.com/feed/home/'],
+    ['BBC Science', 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml'],
+    ['NYT Science', 'https://rss.nytimes.com/services/xml/rss/nyt/Science.xml', 'direct'],
+  ],
+  health: [
+    ['BBC Health', 'https://feeds.bbci.co.uk/news/health/rss.xml'],
+    ['NPR Health', 'https://feeds.npr.org/1128/rss.xml'],
+    ['ScienceDaily Health', 'https://www.sciencedaily.com/rss/health_medicine.xml'],
+    ['Medical Xpress', 'https://medicalxpress.com/rss-feed/'],
+    ['STAT', 'https://www.statnews.com/feed/'],
+    ['NYT Health', 'https://rss.nytimes.com/services/xml/rss/nyt/Health.xml', 'direct'],
+  ],
+  sports: [
+    ['ESPN', 'https://www.espn.com/espn/rss/news', 'direct'],
+    ['BBC Sport', 'https://feeds.bbci.co.uk/sport/rss.xml'],
+    ['CBS Sports', 'https://www.cbssports.com/rss/headlines/', 'direct'],
+    ['Yahoo Sports', 'https://sports.yahoo.com/rss/'],
+  ],
+  world: [
+    ['BBC World', 'https://feeds.bbci.co.uk/news/world/rss.xml'],
+    ['NPR World', 'https://feeds.npr.org/1004/rss.xml'],
+    ['Al Jazeera', 'https://www.aljazeera.com/xml/rss/all.xml'],
+    ['The Guardian World', 'https://www.theguardian.com/world/rss'],
+    ['NYT World', 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', 'direct'],
+  ],
+};
+// Browsers can't read most feeds directly (no CORS headers), so they go through
+// rss2json (fast, 10 newest items) with allorigins (raw XML, slower) as a fallback.
+const RSS2JSON = (u) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`;
+const ALLORIGINS = (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
+const TIMEOUT_MS = 12000;
+const BATCH = 10;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let results = [];
+
+/* ---------- Log ---------- */
+const logEl = $('#log');
+function log(text, cls = '') {
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = text + '\n';
+  logEl.append(s);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* ---------- Port of content_analyzer.dart ---------- */
+function extractKeywords(content, cat) {
+  const lower = content.toLowerCase();
+  const words = lower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter((w) => w.length > 2);
+  const counts = new Map();
+  for (const keyword of cat.keywords) {
+    const k = keyword.toLowerCase();
+    let count = 0;
+    if (lower.includes(k)) count += k.split(' ').length;
+    if (!k.includes(' ')) count += words.filter((w) => w === k || w.includes(k) || k.includes(w)).length;
+    if (count > 0) counts.set(keyword, count);
+  }
+  const upper = content.toUpperCase();
+  for (const [ticker, company] of Object.entries(cat.priorityTerms)) {
+    let count = 0;
+    if (upper.includes('$' + ticker) || upper.includes(ticker + ' ') || upper.includes(' ' + ticker) || words.some((w) => w.toUpperCase() === ticker)) count += 2;
+    if (company && lower.includes(company.toLowerCase())) count += 1;
+    if (count > 0) counts.set(ticker, count);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map((e) => e[0]).slice(0, 15);
+}
+
+function relevanceScore(content, cat) {
+  let score = 0;
+  const lower = content.toLowerCase();
+  const upper = content.toUpperCase();
+  let keywordMatches = 0;
+  for (const keyword of cat.keywords) {
+    const k = keyword.toLowerCase();
+    if (lower.includes(k)) { score += k.includes(' ') ? 0.15 : 0.08; keywordMatches++; }
+  }
+  for (const [ticker, company] of Object.entries(cat.priorityTerms)) {
+    if (lower.includes(ticker.toLowerCase()) || upper.includes('$' + ticker) || upper.includes(ticker + ' ')) score += 0.25;
+    if (company && lower.includes(company.toLowerCase())) score += 0.2;
+  }
+  const titleLower = content.slice(0, 150).toLowerCase();
+  let titleKeywords = 0;
+  for (const keyword of cat.keywords) {
+    if (titleLower.includes(keyword.toLowerCase())) { score += 0.12; titleKeywords++; }
+  }
+  for (const topic of cat.topics) {
+    for (const term of topic) {
+      const clean = term.toLowerCase().trim().replace(/[^\w\s]/g, '');
+      if (clean && lower.includes(clean)) { score += 0.1; break; }
+    }
+  }
+  if (keywordMatches > 3) score += 0.1;
+  if (keywordMatches > 6) score += 0.1;
+  if (titleKeywords > 1) score += 0.15;
+  return Math.min(score, 1);
+}
+
+/* ---------- Fetch + parse (port of rss_scraper.dart) ---------- */
+async function fetchWithTimeout(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res;
+  } catch (e) {
+    throw e.name === 'AbortError' ? new Error('timed out') : e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// XML route: parse <item>s like rss_scraper.dart does
+async function viaXml(url, name, cat) {
+  const xml = new DOMParser().parseFromString(await (await fetchWithTimeout(url)).text(), 'text/xml');
+  const items = [...xml.querySelectorAll('item')].slice(0, 50);
+  if (!items.length) throw new Error('no <item> elements');
+  return items.map((item) => parseItem({
+    title: text(item, 'title'), link: text(item, 'link') || text(item, 'guid'),
+    description: text(item, 'description'), pubDate: text(item, 'pubDate') || text(item, 'dc:date'),
+  }, name, cat));
+}
+
+// rss2json route: same fields, already parsed (pubDate is UTC without a zone)
+async function viaRss2json(url, name, cat) {
+  const data = await (await fetchWithTimeout(RSS2JSON(url))).json();
+  if (data.status !== 'ok' || !data.items?.length) throw new Error(data.message || 'no items');
+  return data.items.map((it) => parseItem({
+    title: it.title, link: it.link || it.guid, description: it.description || it.content,
+    pubDate: it.pubDate ? it.pubDate.replace(' ', 'T') + 'Z' : '',
+  }, name, cat));
+}
+
+async function fetchFeed([name, url, mode], cat) {
+  const t0 = performance.now();
+  const routes = [['rss2json', () => viaRss2json(url, name, cat)], ['allorigins', () => viaXml(ALLORIGINS(url), name, cat)]];
+  if (mode === 'direct') routes.unshift(['direct', () => viaXml(url, name, cat)]);
+  let lastError;
+  for (const [route, go] of routes) {
+    try {
+      const parsed = await go();
+      const articles = parsed.filter(Boolean);
+      log(`✓ ${name.padEnd(20)} ${String(parsed.length).padStart(3)} items  ${((performance.now() - t0) / 1000).toFixed(1)}s  ${route}`, 'ok');
+      return { ok: true, articles };
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  log(`Error scraping RSS feed ${url}: ${lastError.message}`, 'err');
+  return { ok: false, articles: [] };
+}
+
+const text = (el, sel) => el.getElementsByTagName(sel)[0]?.textContent?.trim() || '';
+function cleanHtml(s) {
+  const doc = new DOMParser().parseFromString(s, 'text/html');
+  return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+}
+function parseItem(raw, source, cat) {
+  const title = cleanHtml(raw.title || '');
+  const url = (raw.link || '').trim();
+  const content = cleanHtml(raw.description || '');
+  if (!title || !url || content.length < MIN_CONTENT_LENGTH) return null;
+  const parsed = Date.parse(raw.pubDate || '');
+  const published = Number.isNaN(parsed) ? null : new Date(parsed);
+  const body = title + ' ' + content;
+  return { title, url, source, category: cat.key, published, keywords: extractKeywords(body, cat), score: relevanceScore(body, cat) };
+}
+
+/* ---------- Sheet ---------- */
+const rowsEl = $('#rows');
+let rowCount = 1;
+function fmtDate(d) { return d ? d.toISOString().slice(0, 16).replace('T', ' ') : ''; }
+function resetSheet() {
+  rowsEl.innerHTML = '<tr class="hdr"><th>1</th><td>Published (UTC)</td><td>Title</td><td>Source</td><td>Category</td><td>Relevance</td><td>Keywords</td><td>Link</td><td>URL</td></tr>';
+  rowCount = 1;
+  $('#sheet-status').textContent = 'Articles · 0 rows';
+}
+function appendRows(batch) {
+  const frag = document.createDocumentFragment();
+  for (const a of batch) {
+    rowCount++;
+    const tr = document.createElement('tr');
+    tr.className = 'new';
+    tr.innerHTML = `<th>${rowCount}</th><td>${fmtDate(a.published)}</td>
+      <td class="title"><a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.title)}">${esc(a.title)}</a></td>
+      <td>${esc(a.source)}</td>
+      <td>${esc(a.category)}</td>
+      <td class="num">${a.score.toFixed(2)}<span class="bar-score"><i style="width:${a.score * 100}%"></i></span></td>
+      <td class="kw" title="${esc(a.keywords.join(', '))}">${esc(a.keywords.slice(0, 6).join(', '))}</td>
+      <td><a href="${esc(a.url)}" target="_blank" rel="noopener">Open article ↗</a></td>
+      <td class="url">${esc(a.url)}</td>`;
+    tr.addEventListener('click', () => { $('#cell-ref').textContent = 'B' + tr.firstElementChild.textContent; $('#cell-val').textContent = a.title; });
+    frag.append(tr);
+  }
+  rowsEl.append(frag);
+  $('#sheet-status').textContent = `Articles · ${rowCount - 1} rows`;
+}
+
+/* ---------- Run ---------- */
+async function run() {
+  const key = selectedKey(), cat = { key, ...CATEGORIES[key] }, feeds = FEEDS[key];
+  const file = `${key}_news.xlsx`;
+  const minScore = +$('#min').value, maxArticles = +$('#max').value;
+  $('#run').disabled = true; $('#run').textContent = 'Scraping…';
+  setCatsDisabled(true);
+  $('#dl-xlsx').disabled = $('#dl-csv').disabled = true;
+  logEl.innerHTML = '';
+  log(`$ dart run bin/scraper_cli.dart --category ${key} --summary --min-score ${minScore} --max-articles ${maxArticles} --xlsx ${file}`, 'dim');
+  log('🔍 Starting article scraping...', 'head');
+  log(`Scraping ${feeds.length} ${cat.name} feeds...`);
+  resetSheet();
+  const t0 = performance.now();
+  const tick = setInterval(() => { $('#timer').textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; }, 100);
+  $('#stats').innerHTML = '<span>Fetching feeds…</span>';
+
+  // Fetch feeds 5 at a time
+  const all = [];
+  const queue = [...feeds];
+  let ok = 0;
+  await Promise.all(Array.from({ length: 5 }, async () => {
+    while (queue.length) {
+      const got = await fetchFeed(queue.shift(), cat);
+      if (got.ok) ok++;
+      all.push(...got.articles);
+    }
+  }));
+
+  // Dedupe by title + source (as in article_scraper.dart) and by URL, then rank
+  const seen = new Set();
+  const unique = all.filter((a) => {
+    const k1 = a.title.toLowerCase() + '_' + a.source, k2 = a.url;
+    if (seen.has(k1) || seen.has(k2)) return false;
+    seen.add(k1); seen.add(k2); return true;
+  }).sort((a, b) => b.score - a.score || (b.published || 0) - (a.published || 0));
+  results = unique.filter((a) => a.score >= minScore).slice(0, maxArticles);
+
+  log(`Found ${all.length} ${key} articles from ${ok} of ${feeds.length} feeds`);
+  log(`Total unique articles found: ${unique.length}`);
+  log('✅ Scraping completed!', 'ok');
+  log(`Found ${results.length} relevant articles (score ≥ ${minScore})`);
+  log('');
+
+  // Append to the sheet in batches, like SheetsExporter.appendArticles
+  for (let i = 0; i < results.length; i += BATCH) {
+    const batch = results.slice(i, i + BATCH);
+    appendRows(batch);
+    log(`Batch ${i / BATCH + 1}: wrote ${batch.length} rows`, 'dim');
+    await sleep(350);
+  }
+  clearInterval(tick);
+  const secs = ((performance.now() - t0) / 1000).toFixed(1);
+  $('#timer').textContent = secs + 's';
+  log(`📊 Appended ${results.length} articles to ${file}`, 'ok');
+
+  const sources = new Set(results.map((a) => a.source)).size;
+  const avg = results.length ? results.reduce((s, a) => s + a.score, 0) / results.length : 0;
+  $('#stats').innerHTML = `<span><b>${results.length}</b> articles</span><span><b>${sources}</b> sources</span>` +
+    `<span>avg relevance <b>${(avg * 100).toFixed(1)}%</b></span><span><b>${ok}/${feeds.length}</b> feeds reachable</span><span>${secs}s</span>`;
+  $('#run').disabled = false; $('#run').textContent = '↻ Scrape again';
+  setCatsDisabled(false);
+  $('#dl-xlsx').disabled = $('#dl-csv').disabled = !results.length;
+  document.body.dataset.done = '1';
+}
+
+/* ---------- Downloads ---------- */
+const HEADERS = ['Published (UTC)', 'Title', 'Source', 'Category', 'Relevance', 'Keywords', 'URL'];
+const toRows = () => results.map((a) => [fmtDate(a.published), a.title, a.source, a.category, +a.score.toFixed(3), a.keywords.slice(0, 6).join(', '), a.url]);
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('#dl-csv').addEventListener('click', () => {
+  const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [HEADERS, ...toRows()].map((r) => r.map(q).join(',')).join('\r\n');
+  save(new Blob(['﻿' + csv], { type: 'text/csv' }), `${selectedKey()}_news.csv`);
+});
+$('#dl-xlsx').addEventListener('click', async () => {
+  if (!window.XLSX) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = resolve; s.onerror = reject; document.head.append(s);
+    });
+  }
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...toRows()]);
+  // Make each title a real hyperlink in Excel
+  results.forEach((a, i) => { ws[XLSX.utils.encode_cell({ r: i + 1, c: 1 })].l = { Target: a.url }; });
+  ws['!cols'] = [{ wch: 17 }, { wch: 70 }, { wch: 18 }, { wch: 12 }, { wch: 10 }, { wch: 40 }, { wch: 60 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Articles');
+  XLSX.writeFile(wb, `${selectedKey()}_news.xlsx`);
+});
+
+/* ---------- Category picker ---------- */
+const params = new URLSearchParams(location.search);
+const catsEl = $('#cats');
+const initial = CATEGORIES[params.get('category')] ? params.get('category') : 'finance';
+for (const [key, c] of Object.entries(CATEGORIES)) {
+  const label = document.createElement('label');
+  label.className = 'cat';
+  label.innerHTML = `<input type="radio" name="category" value="${key}"${key === initial ? ' checked' : ''}>` +
+    `<span>${esc(c.name)} <small>${FEEDS[key].length} feeds</small></span>`;
+  catsEl.append(label);
+}
+const selectedKey = () => catsEl.querySelector('input:checked').value;
+const setCatsDisabled = (off) => catsEl.querySelectorAll('input').forEach((i) => { i.disabled = off; });
+function showCategory() {
+  const key = selectedKey(), c = CATEGORIES[key];
+  $('#cat-desc').textContent = `${c.description}. Scored on ${c.keywords.length} keywords and ${c.topics.length} topic groups` +
+    (Object.keys(c.priorityTerms).length ? `, plus priority tickers (${Object.keys(c.priorityTerms).join(', ')}).` : '.');
+  $('#cmd').textContent = `$ dart run bin/scraper_cli.dart --category ${key} --summary --xlsx ${key}_news.xlsx`;
+  $('#sheet-name').textContent = `${key}_news.xlsx`;
+  const url = new URL(location.href);
+  url.searchParams.set('category', key);
+  url.searchParams.delete('autorun');
+  history.replaceState(null, '', url);
+}
+catsEl.addEventListener('change', () => {
+  showCategory();
+  results = [];
+  resetSheet();
+  rowsEl.insertAdjacentHTML('beforeend', '<tr class="empty"><th>2</th><td colspan="8">Press “Scrape now” to pull live articles.</td></tr>');
+  $('#dl-xlsx').disabled = $('#dl-csv').disabled = true;
+  $('#run').textContent = '▶ Scrape now';
+  $('#stats').innerHTML = '<span>Press “Scrape now” to pull live articles.</span>';
+});
+showCategory();
+
+$('#run').addEventListener('click', run);
+if (params.has('autorun')) run();
+</script>
+</body>
+</html>

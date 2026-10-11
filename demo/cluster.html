@@ -3,26 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cluster Sort Demo — Ethan Chen</title>
+  <title>Cluster sort demo, Ethan Chen</title>
   <meta name="description" content="Live side-by-side demo: distributed bubble-sort-and-merge on one node vs a 4-node cluster, running in your browser.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
+  <link rel="preload" href="../fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <style>
+    @font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    @font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+  </style>
   <style>
     :root {
-      --bg: #f4f1ea; --ink: #161513; --ink-2: #57534b; --line: #d6d0c3; --accent: #c2410c;
-      --term: #12110f; --term-2: #1c1a17; --term-ink: #e8e3d8; --term-dim: #8a8478; --term-line: #2e2b26;
+      --bg: #f7f7f8; --ink: #18181b; --ink-2: #52525b; --line: rgb(24 24 27 / 0.14); --accent: #b5491c;
+      --term: #141416; --term-2: #1c1c20; --term-ink: #e4e4e7; --term-dim: #8b8b93; --term-line: #2a2a2e;
       --ok: #4ade80; --info: #67c7d9; --warn: #fbbf24; --busy: #f97316;
       --gutter: clamp(1rem, 0.5rem + 2.5vw, 3rem);
-      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --mono: "Geist Mono", ui-monospace, monospace;
     }
     @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) { --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #f97316; --term: #0a0a09; --term-2: #161513; }
+      :root:not([data-theme="light"]) { --bg: #0d0d0f; --ink: #ededef; --ink-2: #a1a1aa; --line: rgb(255 255 255 / 0.12); --accent: #e68c56; --term: #09090b; --term-2: #161619; }
     }
-    :root[data-theme="dark"] { --bg: #12110f; --ink: #ece8df; --ink-2: #9d978a; --line: #2e2b26; --accent: #f97316; --term: #0a0a09; --term-2: #161513; }
+    :root[data-theme="dark"] { --bg: #0d0d0f; --ink: #ededef; --ink-2: #a1a1aa; --line: rgb(255 255 255 / 0.12); --accent: #e68c56; --term: #09090b; --term-2: #161619; }
 
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.6 "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.6 "Geist", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     a { color: inherit; }
     .wrap { max-width: 1400px; margin-inline: auto; padding-inline: var(--gutter); }
 
@@ -32,38 +37,38 @@
 
     .intro { padding-block: clamp(2rem, 5vw, 4rem) 1.5rem; display: grid; gap: 1rem; }
     .eyebrow { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
-    h1 { margin: 0; font: 400 clamp(2.2rem, 1.2rem + 4vw, 4.5rem)/1 "Instrument Serif", Georgia, serif; letter-spacing: -0.02em; }
+    h1 { margin: 0; font: 600 clamp(2.1rem, 1.3rem + 3vw, 3.5rem)/1.05 "Geist", system-ui, sans-serif; letter-spacing: -0.035em; text-wrap: balance; }
     .intro p { margin: 0; max-width: 62ch; color: var(--ink-2); }
 
     .controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem 1.5rem; padding-block: 1.25rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
     .field { display: grid; gap: .3rem; }
     .field span { font-family: var(--mono); font-size: .75rem; color: var(--ink-2); }
-    select, button { font: 500 .95rem "IBM Plex Sans", sans-serif; color: var(--ink); }
-    select { padding: .55rem 2rem .55rem .75rem; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); appearance: none;
+    select, button { font: 500 .95rem "Geist", sans-serif; color: var(--ink); }
+    select { padding: .55rem 2rem .55rem .75rem; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); appearance: none;
       background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
       background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
-    .run { padding: .6rem 1.4rem; border: 0; border-radius: 6px; background: var(--ink); color: var(--bg); cursor: pointer; display: inline-flex; gap: .5rem; align-items: center; }
+    .run { padding: .6rem 1.4rem; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); cursor: pointer; display: inline-flex; gap: .5rem; align-items: center; }
     .run:hover { background: var(--accent); }
     .run:disabled { opacity: .5; cursor: progress; }
     .controls .note { margin-left: auto; font-family: var(--mono); font-size: .75rem; color: var(--ink-2); max-width: 46ch; }
 
     .result { min-height: 3.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding-block: 1rem; }
-    .result strong { font: 400 clamp(1.6rem, 1rem + 2vw, 2.6rem)/1 "Instrument Serif", serif; color: var(--accent); }
+    .result strong { font: 600 clamp(1.6rem, 1rem + 2vw, 2.4rem)/1 "Geist", sans-serif; letter-spacing: -0.03em; color: var(--accent); }
     .result span { color: var(--ink-2); }
 
     .panes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(.75rem, 2vw, 1.5rem); padding-bottom: 3rem; }
     @media (max-width: 900px) { .panes { grid-template-columns: 1fr; } }
 
-    .term { background: var(--term); color: var(--term-ink); border-radius: 10px; overflow: hidden; border: 1px solid var(--term-line); display: flex; flex-direction: column; min-width: 0; }
+    .term { background: var(--term); color: var(--term-ink); border-radius: 14px; overflow: hidden; border: 1px solid var(--term-line); display: flex; flex-direction: column; min-width: 0; }
     .term__bar { display: flex; align-items: center; gap: .75rem; padding: .6rem .9rem; background: var(--term-2); border-bottom: 1px solid var(--term-line); }
-    .dots { display: flex; gap: 6px; } .dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3732; }
+    .dots { display: flex; gap: 6px; } .dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a40; }
     .dots i:nth-child(1) { background: #ff5f57; } .dots i:nth-child(2) { background: #febc2e; } .dots i:nth-child(3) { background: #28c840; }
     .term__title { font-family: var(--mono); font-size: .8rem; color: var(--term-dim); flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .term__time { font-family: var(--mono); font-size: .8rem; color: var(--term-ink); min-width: 5ch; text-align: right; }
 
     .nodes { display: flex; flex-wrap: wrap; gap: .4rem .9rem; padding: .6rem .9rem; border-bottom: 1px solid var(--term-line); font-family: var(--mono); font-size: .75rem; color: var(--term-dim); }
     .node { display: inline-flex; align-items: center; gap: .4rem; }
-    .node b { width: 8px; height: 8px; border-radius: 50%; background: #3a3732; transition: background .15s, box-shadow .15s; }
+    .node b { width: 8px; height: 8px; border-radius: 50%; background: #3a3a40; transition: background .15s, box-shadow .15s; }
     .node.busy b { background: var(--busy); box-shadow: 0 0 8px var(--busy); }
     .node.done b { background: var(--ok); }
     .node em { font-style: normal; color: var(--term-ink); }
@@ -77,17 +82,18 @@
     @keyframes blink { 50% { opacity: 0; } }
 
     .explain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; padding-block: 2rem 4rem; border-top: 1px solid var(--line); }
-    .explain h2 { margin: 0 0 .4rem; font-family: var(--mono); font-size: .75rem; font-weight: 400; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    .explain h2 { margin: 0 0 .4rem; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
     .explain p { margin: 0; color: var(--ink-2); font-size: .95rem; }
     @media (max-width: 760px) { .explain { grid-template-columns: 1fr; } .controls .note { margin-left: 0; } }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+      .ico { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.15em; margin-inline: 0.3em; }
   </style>
   <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
   <header class="top wrap">
-    <a href="../#/work/cluster">← Back to case study</a>
-    <a href="https://github.com/chenethan123/Distributed-Computing-Cluster" target="_blank" rel="noopener">Source on GitHub ↗</a>
+    <a href="../#/work/cluster"><svg class="ico" aria-hidden="true"><use href="../icons.svg#i-arrow-left"/></svg>Back to case study</a>
+    <a href="https://github.com/chenethan123/Distributed-Computing-Cluster" target="_blank" rel="noopener">Source on GitHub<svg class="ico" aria-hidden="true"><use href="../icons.svg#i-arrow-up-right"/></svg></a>
   </header>
 
   <main class="wrap">
@@ -97,7 +103,7 @@
       <p>
         Both terminals run the same pipeline as the real cluster: split the input into chunks, bubble-sort
         each chunk on a worker node, then merge sorted files on the master as they come back. Here each
-        "node" is a Web Worker running on your device, so the timings are real.
+        “node” is a Web Worker running on your device, so the timings are real.
       </p>
     </section>
 
@@ -124,12 +130,12 @@
 
     <div class="panes">
       <section class="term" id="single" aria-label="Single node terminal">
-        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 — single node</span><span class="term__time">0.00s</span></div>
+        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 - single node</span><span class="term__time">0.00s</span></div>
         <div class="nodes"></div><div class="progress"><div></div></div>
         <pre class="log"><span class="dim">$ </span><span class="cursor"></span></pre>
       </section>
       <section class="term" id="cluster" aria-label="Cluster terminal">
-        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 — 4-node cluster</span><span class="term__time">0.00s</span></div>
+        <div class="term__bar"><span class="dots"><i></i><i></i><i></i></span><span class="term__title">master@127.0.0.1 - 4-node cluster</span><span class="term__time">0.00s</span></div>
         <div class="nodes"></div><div class="progress"><div></div></div>
         <pre class="log"><span class="dim">$ </span><span class="cursor"></span></pre>
       </section>

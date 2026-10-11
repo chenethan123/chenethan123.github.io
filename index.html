@@ -2,167 +2,183 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ethan Chen — Software Engineer</title>
-  <meta name="description" content="Portfolio of Ethan Chen, software engineer.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ethan Chen, software engineer</title>
+  <meta name="description" content="Ethan Chen, a computer science student at the University of Florida, building trading engines, data pipelines, compute clusters and iOS apps.">
+  <meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ethan Chen, software engineer">
+  <meta property="og:description" content="Trading engines, data pipelines, compute clusters and iOS apps, each with a live demo or real benchmark.">
+  <meta property="og:url" content="https://chenethan123.github.io/">
+  <meta property="og:image" content="https://chenethan123.github.io/images/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script>
     document.documentElement.classList.add('js');
-    // Apply saved theme before paint to avoid a flash
-    try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    // Apply a saved theme choice before first paint (no flash)
+    try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <header class="topbar">
-    <div class="wrap topbar__inner">
-      <a href="#top" class="brand">Ethan Chen</a>
-      <nav class="nav" id="nav" aria-label="Primary">
+  <div class="nav-shell">
+    <nav class="nav" aria-label="Primary">
+      <a href="#top" class="brand" translate="no"><span class="brand__mark" aria-hidden="true">EC</span>Ethan Chen</a>
+      <div class="nav__links">
         <a href="#work">Work</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
-      </nav>
-      <div class="topbar__meta">
-        <span class="clock mono" aria-label="Local time"><span id="clock">--:--</span> <span class="muted">local</span></span>
-        <button class="icon-btn" id="theme-toggle" aria-label="Toggle dark mode">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
-        </button>
-        <button class="icon-btn menu-btn" id="menu-toggle" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
-          <span></span><span></span>
-        </button>
       </div>
-    </div>
-  </header>
+      <button class="icon-btn menu-btn" id="menu-toggle" type="button" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
+        <span class="menu-btn__lines" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </nav>
+  </div>
+  <div class="menu" id="menu" aria-label="Menu">
+    <a href="#work" style="--i:0">Work</a>
+    <a href="#about" style="--i:1">About</a>
+    <a href="#contact" style="--i:2">Contact</a>
+  </div>
 
   <main id="main">
-    <!-- HERO -->
-    <section class="hero wrap" id="top">
-      <p class="eyebrow mono reveal"><span class="dot" aria-hidden="true"></span> Open to internships — Summer 2027</p>
-      <h1 class="hero__title reveal">
-        I build software that <em>does the boring work</em> so people don’t have to.
-      </h1>
-      <div class="hero__grid reveal">
-        <p class="hero__lede">
-          CS student and software engineer working across data pipelines, scrapers,
-          and mobile apps. Currently interested in <span class="hl">applied ML</span> and
-          tools that turn messy data into something useful.
-        </p>
-        <dl class="facts">
-          <div><dt class="mono">Based in</dt><dd>Miami, Florida</dd></div>
-          <div><dt class="mono">Studying</dt><dd>Computer Science</dd></div>
-          <div><dt class="mono">School</dt><dd>University of Florida ’30</dd></div>
-          <div><dt class="mono">Stack</dt><dd>Python, TypeScript, Flutter, SQL</dd></div>
-        </dl>
+    <section class="hero wrap" id="top" aria-labelledby="hero-h">
+      <p class="status" data-reveal><span class="status__dot" aria-hidden="true"></span>Open to internships, summer 2027</p>
+      <h1 class="hero__title" id="hero-h" data-reveal style="--i:1">I build software that <span class="accent">does the boring work</span> so people don’t have to.</h1>
+      <div class="hero__row">
+        <div class="hero__copy" data-reveal style="--i:2">
+          <p class="hero__lede">CS student at the University of Florida, building trading engines, data pipelines, compute clusters and iOS apps.</p>
+          <div class="hero__ctas">
+            <a class="btn btn--primary" href="Ethan_Chen_Resume.pdf" target="_blank" rel="noopener">
+              Download résumé <svg class="icon icon--down" aria-hidden="true"><use href="icons.svg#i-download-simple"/></svg>
+            </a>
+            <a class="btn btn--ghost" href="#contact">Contact</a>
+          </div>
+        </div>
+        <div class="hero__visual" aria-label="Featured projects">
+          <a class="tile" href="#/work/exchangelab" data-slug="exchangelab" data-reveal style="--i:3">
+            <span class="frame"><span class="frame__img"><img src="images/exchangelab/cover.png" srcset="images/exchangelab/cover-800.webp 800w, images/exchangelab/cover-1400.webp 1400w, images/exchangelab/cover.png 2000w" sizes="(max-width: 900px) 46vw, 340px" alt="ExchangeLab trading dashboard next to its benchmark results" width="2000" height="1000" fetchpriority="high"></span></span>
+            <span class="tile__meta"><span class="tile__title">ExchangeLab <svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-up-right"/></svg></span><span class="mono muted">Python</span></span>
+          </a>
+          <a class="tile" href="#/work/formula-quizzer" data-slug="formula-quizzer" data-reveal style="--i:4">
+            <span class="frame"><span class="frame__img"><img src="images/formula-quizzer/cover.png" srcset="images/formula-quizzer/cover-800.webp 800w, images/formula-quizzer/cover-1400.webp 1400w, images/formula-quizzer/cover.png 2000w" sizes="(max-width: 900px) 46vw, 340px" alt="Formula Quizzer on three iPhones" width="2000" height="1000" fetchpriority="high"></span></span>
+            <span class="tile__meta"><span class="tile__title">Formula Quizzer <svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-up-right"/></svg></span><span class="mono muted">Swift</span></span>
+          </a>
+        </div>
       </div>
     </section>
 
-    <!-- WORK -->
     <section class="section wrap" id="work" aria-labelledby="work-h">
       <div class="section__head">
-        <h2 id="work-h" class="section__title">Selected work</h2>
-        <span class="mono muted" id="project-count"></span>
+        <h2 class="section__title" id="work-h" data-reveal>Selected work</h2>
+        <p class="section__lede" data-reveal style="--i:1">Each project has a write-up, real screenshots and either a live demo or measured results.</p>
       </div>
-
-      <ol class="projects" id="projects"><!-- Rendered from projects.js --></ol>
+      <ul class="work" id="projects"><!-- Rendered from projects.js --></ul>
     </section>
 
-    <!-- ABOUT -->
     <section class="section wrap" id="about" aria-labelledby="about-h">
       <div class="section__head">
-        <h2 id="about-h" class="section__title">About</h2>
+        <h2 class="section__title" id="about-h" data-reveal>About</h2>
       </div>
       <div class="about">
-        <div class="about__text reveal">
-          <p>
-            Write two or three short paragraphs here. Skip the adjectives (“passionate”,
-            “driven”) and say what you actually like doing, with one concrete example.
-          </p>
-          <p>
-            Something personal works well as a closer: what you do away from the keyboard,
-            or the problem you can’t stop thinking about right now.
-          </p>
-          <a class="text-link" href="Ethan_Chen_Resume.pdf" target="_blank" rel="noopener">Download résumé <span aria-hidden="true">→</span></a>
+        <div class="about__text" data-reveal style="--i:1">
+          <p>I study computer science at the University of Florida, class of 2030. Most of my projects end with a measurement, like orders per second or cluster speedup.</p>
+          <p>For four years I handled IT and POS systems at China Buffet II, and led tech workshops for 2,000+ seniors with Bytes for Better Lives.</p>
+          <p>Outside class: FBLA district champion in Coding &amp; Programming, and Public Forum debate, ranked in the top 5% of 3,000+ teams.</p>
         </div>
-        <div class="about__side reveal">
-          <div class="profile">
-            <!-- Headshot: save your photo as images/headshot.jpg (portrait, roughly 4:5). Initials show until then. -->
-            <figure class="headshot">
-              <span class="headshot__initials" aria-hidden="true">EC</span>
-              <img src="images/headshot.jpg" alt="Ethan Chen" width="400" height="500" loading="lazy" onerror="this.remove()">
+        <div class="about__side">
+          <div class="profile" data-reveal style="--i:2">
+            <!-- Headshot: save a portrait photo (about 4:5) as images/headshot.jpg, then uncomment the <img> below. Initials show until then. -->
+            <figure class="headshot frame">
+              <span class="frame__img">
+                <span class="headshot__initials" aria-hidden="true">EC</span>
+                <!-- <img src="images/headshot.jpg" alt="Ethan Chen" width="400" height="500" loading="lazy"> -->
+              </span>
             </figure>
-            <div class="edu">
-              <h3 class="mono label">Education</h3>
+            <div>
               <p class="edu__school">University of Florida</p>
-              <p class="muted">Computer Science</p>
-              <p class="edu__grad mono"><span class="muted">Expected graduation</span> 2030</p>
+              <p class="edu__detail">B.S. Computer Science</p>
+              <p class="edu__detail">Expected graduation <span class="mono">May&nbsp;2030</span></p>
             </div>
           </div>
-          <h3 class="mono label">Experience</h3>
-          <ul class="timeline">
-            <li><span class="mono muted">2023–26</span><div><strong>Web Developer &amp; Technology Lead</strong><span>Bytes for Better Lives</span></div></li>
-            <li><span class="mono muted">2022–26</span><div><strong>IT Support &amp; POS Systems Technician</strong><span>China Buffet II</span></div></li>
-            <li><span class="mono muted">2022–26</span><div><strong>Computer Science Track</strong><span>American Heritage Schools</span></div></li>
-          </ul>
-          <h3 class="mono label">Tools I reach for</h3>
-          <ul class="chips">
-            <li>Python</li><li>TypeScript</li><li>Flutter</li><li>PostgreSQL</li>
-            <li>Pandas</li><li>Playwright</li><li>Docker</li><li>Git</li>
-          </ul>
+          <div data-reveal style="--i:3">
+            <h3 class="about__h">Experience</h3>
+            <ul class="xp">
+              <li><span class="mono muted">2023-2026</span><div><p class="xp__role">Vice President &amp; Web Developer</p><p class="xp__org">Bytes for Better Lives</p></div></li>
+              <li><span class="mono muted">2022-2026</span><div><p class="xp__role">IT Support &amp; POS Systems</p><p class="xp__org">China Buffet II</p></div></li>
+              <li><span class="mono muted">2022-2026</span><div><p class="xp__role">Computer Science Track</p><p class="xp__org">American Heritage Schools</p></div></li>
+            </ul>
+          </div>
+          <div data-reveal style="--i:4">
+            <h3 class="about__h">Toolkit</h3>
+            <dl class="kit">
+              <div><dt>Languages</dt><dd>Python, Swift, Java, C, JavaScript, Dart, Lua</dd></div>
+              <div><dt>Frameworks</dt><dd>SwiftUI, Flutter, FastAPI, Flask, Node.js, Express</dd></div>
+              <div><dt>Tools &amp; data</dt><dd>Git, SQLite, Supabase, pandas, NumPy, OpenCV, OpenAI API</dd></div>
+            </dl>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- CONTACT -->
-    <section class="section wrap contact" id="contact" aria-labelledby="contact-h">
-      <h2 id="contact-h" class="mono label">Contact</h2>
-      <a class="contact__mail reveal" href="mailto:ethanchen.5555@gmail.com">ethanchen.5555@gmail.com</a>
-      <ul class="socials mono">
-        <li><a href="https://github.com/chenethan123" target="_blank" rel="noopener">GitHub ↗</a></li>
-        <li><a href="https://www.linkedin.com/in/chenethan11/" target="_blank" rel="noopener">LinkedIn ↗</a></li>
-        <li><a href="Ethan_Chen_Resume.pdf" target="_blank" rel="noopener">Résumé ↗</a></li>
-      </ul>
+    <section class="section wrap" id="contact" aria-labelledby="contact-h">
+      <h2 class="section__title" id="contact-h" data-reveal>Contact</h2>
+      <p class="section__lede" data-reveal style="--i:1">Internships for summer 2027, projects, or questions about anything here.</p>
+      <a class="contact__mail" href="mailto:ethanchen.5555@gmail.com" data-reveal style="--i:2">ethanchen.5555@gmail.com</a>
+      <div class="contact__links" data-reveal style="--i:3">
+        <a class="btn btn--ghost" href="https://github.com/chenethan123" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-github-logo"/></svg>GitHub</a>
+        <a class="btn btn--ghost" href="https://www.linkedin.com/in/chenethan11/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-linkedin-logo"/></svg>LinkedIn</a>
+        <a class="btn btn--ghost" href="Ethan_Chen_Resume.pdf" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-download-simple"/></svg>Download résumé</a>
+      </div>
     </section>
   </main>
 
-  <footer class="footer wrap mono muted">
-    <span>© <span id="year"></span> Ethan Chen</span>
-    <a href="#top">Back to top ↑</a>
+  <footer class="footer wrap">
+    <span>© <span id="year">2026</span> Ethan Chen</span>
+    <div class="footer__end">
+      <div class="theme-switch" role="group" aria-label="Color theme">
+        <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+      </div>
+      <a class="to-top" href="#top">Back to top <svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-up"/></svg></a>
+    </div>
   </footer>
 
   <!-- Case study (filled from projects.js) -->
   <dialog class="case" id="case" aria-labelledby="case-title">
-    <div class="case__bar">
-      <button class="case__close" data-close type="button">
-        <span aria-hidden="true">←</span> <span class="mono">All work</span>
-      </button>
-      <span class="mono muted" id="case-pos"></span>
-      <div class="case__nav">
-        <button class="icon-btn" id="case-prev" type="button" aria-label="Previous project">←</button>
-        <button class="icon-btn" id="case-next" type="button" aria-label="Next project">→</button>
-      </div>
-    </div>
     <div class="case__scroll" id="case-scroll">
+      <div class="case__bar">
+        <button class="btn btn--ghost" type="button" data-close>
+          <svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-left"/></svg>All work
+        </button>
+        <div class="case__nav">
+          <button class="icon-btn" id="case-prev" type="button" aria-label="Previous project"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-caret-left"/></svg></button>
+          <button class="icon-btn" id="case-next" type="button" aria-label="Next project"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-caret-right"/></svg></button>
+        </div>
+      </div>
       <article class="case__body wrap" id="case-body"></article>
     </div>
   </dialog>
 
-  <!-- Image lightbox -->
+  <!-- Image viewer -->
   <dialog class="lightbox" id="lightbox" aria-label="Image viewer">
-    <button class="lightbox__close icon-btn" data-close type="button" aria-label="Close">✕</button>
-    <button class="lightbox__arrow lightbox__arrow--prev icon-btn" id="lb-prev" type="button" aria-label="Previous image">←</button>
-    <figure class="lightbox__figure">
-      <img id="lb-img" alt="">
-      <figcaption class="mono" id="lb-cap"></figcaption>
-    </figure>
-    <button class="lightbox__arrow lightbox__arrow--next icon-btn" id="lb-next" type="button" aria-label="Next image">→</button>
+    <button class="lightbox__close icon-btn" type="button" data-close aria-label="Close image viewer"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-x"/></svg></button>
+    <div class="lightbox__stage" id="lb-stage">
+      <img class="lightbox__img" id="lb-img" alt="" draggable="false">
+    </div>
+    <div class="lightbox__bar">
+      <button class="lightbox__arrow icon-btn" id="lb-prev" type="button" aria-label="Previous image"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-left"/></svg></button>
+      <p class="lightbox__cap" id="lb-cap" aria-live="polite"></p>
+      <button class="lightbox__arrow icon-btn" id="lb-next" type="button" aria-label="Next image"><svg class="icon" aria-hidden="true"><use href="icons.svg#i-arrow-right"/></svg></button>
+    </div>
   </dialog>
-
-  <!-- Floating preview that follows the cursor over project rows (pointer devices only) -->
-  <div class="preview" id="preview" aria-hidden="true"><span id="preview-label"></span></div>
 
   <script src="projects.js"></script>
   <script src="script.js"></script>

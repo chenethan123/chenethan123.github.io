@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ExchangeLab Demo — Ethan Chen</title>
+  <title>ExchangeLab demo, Ethan Chen</title>
   <meta name="description" content="Live demo: trade against market-making, momentum and random bots on a price-time-priority matching engine, running in your browser." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%233987e5'/%3E%3Cpath d='M3 11l3-3 2 2 5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,7 +39,7 @@
 
     <div class="search" id="search">
       <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-      <input id="symbol-input" type="text" placeholder="Search a ticker — AAPL, NVDA, SPY…" autocomplete="off" spellcheck="false"
+      <input id="symbol-input" type="text" placeholder="Search a ticker: AAPL, NVDA, SPY…" autocomplete="off" spellcheck="false"
              role="combobox" aria-expanded="false" aria-controls="symbol-list" aria-label="Choose a stock" maxlength="15" />
       <kbd>/</kbd>
       <ul class="suggestions" id="symbol-list" role="listbox" hidden></ul>
@@ -92,7 +92,7 @@
           <div id="today-chart" class="chart-host"></div>
         </div>
         <div class="range" id="day-range" hidden>
-          <div class="range-labels"><span id="range-low">—</span><span class="muted">Today's real range</span><span id="range-high">—</span></div>
+          <div class="range-labels"><span id="range-low">—</span><span class="muted">Today’s real range</span><span id="range-high">—</span></div>
           <div class="range-track"><span class="range-mark" id="range-mark"></span></div>
           <p class="range-note" id="range-note"></p>
         </div>
@@ -260,7 +260,7 @@
     </main>
 
     <footer>
-      In this demo, quotes are a Yahoo Finance snapshot from the close on Oct 9, 2026, because browsers can't call Yahoo directly; the full app fetches a live quote when you choose a stock. After that, everything you see is simulated.
+      In this demo, quotes are a Yahoo Finance snapshot from the close on Oct 9, 2026, because browsers can’t call Yahoo directly; the full app fetches a live quote when you choose a stock. After that, everything you see is simulated.
     </footer>
   </div>
 

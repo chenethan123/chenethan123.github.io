@@ -1,115 +1,131 @@
 const root = document.documentElement;
 const PROJECTS = window.PROJECTS || [];
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const pad = (n) => String(n).padStart(2, '0');
+const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const reduced = () => reducedQuery.matches;
 const esc = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Responsive sources generated next to each PNG (800w and 1400w WebP)
+const srcset = (src) => src.endsWith('.png') ? `${src.slice(0, -4)}-800.webp 800w, ${src.slice(0, -4)}-1400.webp 1400w, ${src} 2000w` : '';
+const icon = (name, cls = '') => `<svg class="icon ${cls}" aria-hidden="true"><use href="icons.svg#i-${name}"/></svg>`;
 
-// Footer year
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// Live local clock
-const clock = document.getElementById('clock');
-const tick = () => {
-  clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-tick();
-setInterval(tick, 15000);
-
-// Theme toggle (remembers choice)
-document.getElementById('theme-toggle').addEventListener('click', () => {
-  const isDark = root.dataset.theme
-    ? root.dataset.theme === 'dark'
-    : matchMedia('(prefers-color-scheme: dark)').matches;
-  root.dataset.theme = isDark ? 'light' : 'dark';
-  try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
-});
-
-// Mobile menu
-const nav = document.getElementById('nav');
-const menuBtn = document.getElementById('menu-toggle');
-const setMenu = (open) => {
-  nav.classList.toggle('is-open', open);
-  menuBtn.setAttribute('aria-expanded', open);
-  menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-};
-menuBtn.addEventListener('click', () => setMenu(!nav.classList.contains('is-open')));
-nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
-addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-
-// Top bar border once scrolled
-const topbar = document.querySelector('.topbar');
-addEventListener('scroll', () => topbar.classList.toggle('is-scrolled', scrollY > 8), { passive: true });
+/* ==========================================================================
+   Theme: Auto (system) / Light / Dark, remembered per browser
+   ========================================================================== */
+const themeButtons = [...document.querySelectorAll('[data-theme-choice]')];
+function applyTheme(choice) {
+  if (choice === 'light' || choice === 'dark') root.dataset.theme = choice;
+  else delete root.dataset.theme;
+  themeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeChoice === choice)));
+}
+let savedTheme = 'auto';
+try { savedTheme = localStorage.getItem('theme') || 'auto'; } catch (e) {}
+applyTheme(savedTheme);
+themeButtons.forEach((b) => b.addEventListener('click', () => {
+  const choice = b.dataset.themeChoice;
+  applyTheme(choice);
+  try { choice === 'auto' ? localStorage.removeItem('theme') : localStorage.setItem('theme', choice); } catch (e) {}
+}));
 
 /* ==========================================================================
-   Project list (rendered from projects.js)
+   Mobile menu
+   ========================================================================== */
+const menu = document.getElementById('menu');
+const menuBtn = document.getElementById('menu-toggle');
+function setMenu(open) {
+  menu.classList.toggle('is-open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  root.classList.toggle('no-scroll', open);
+  document.getElementById('main').inert = open;
+  if (open) menu.querySelector('a').focus({ preventScroll: true });
+}
+menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
+menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && menu.classList.contains('is-open')) { setMenu(false); menuBtn.focus(); }
+});
+
+/* Nav gains a shadow once the page scrolls (observer, no scroll listener) */
+const navShell = document.querySelector('.nav-shell');
+const sentinel = document.createElement('div');
+sentinel.style.cssText = 'position:absolute;top:0;height:1px;width:1px;';
+document.body.prepend(sentinel);
+new IntersectionObserver(([e]) => navShell.classList.toggle('is-scrolled', !e.isIntersecting)).observe(sentinel);
+
+/* ==========================================================================
+   Work grid (rendered from projects.js)
    ========================================================================== */
 const list = document.getElementById('projects');
 list.innerHTML = PROJECTS.map((p, i) => `
-  <li class="project reveal" data-slug="${p.slug}" data-color="${p.color}">
-    <a href="#/work/${p.slug}" class="project__link">
-      <span class="project__num mono">${pad(i + 1)}</span>
-      <span class="project__title">${esc(p.title)}</span>
-      <span class="project__desc">${esc(p.summary)}</span>
-      <span class="project__tags mono">${p.tags.map(esc).join(' · ')}</span>
-      <span class="project__year mono">${esc(p.year)}</span>
-      <span class="project__arrow" aria-hidden="true">→</span>
+  <li data-reveal style="--i:${i % 2}">
+    <a class="tile" href="#/work/${esc(p.slug)}" data-slug="${esc(p.slug)}">
+      <span class="frame"><span class="frame__img">
+        <img src="${esc(p.cover.src)}" srcset="${srcset(p.cover.src)}" sizes="(max-width: 768px) 100vw, 680px" alt="${esc(p.cover.alt)}" width="${p.cover.w || 2000}" height="${p.cover.h || 1000}" loading="lazy" decoding="async">
+      </span></span>
+      <span class="project__body">
+        <span class="tile__meta">
+          <span class="tile__title">${esc(p.title)} ${icon('arrow-up-right')}</span>
+          <span class="mono muted">${esc(p.year)}</span>
+        </span>
+        <span class="project__summary">${esc(p.summary)}</span>
+        <span class="project__tags mono">${p.tags.map(esc).join(', ')}</span>
+      </span>
     </a>
   </li>`).join('');
-document.getElementById('project-count').textContent = `(${pad(PROJECTS.length)})`;
-
-list.addEventListener('click', (e) => {
-  const link = e.target.closest('.project__link');
-  if (!link || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-  e.preventDefault();
-  openCase(link.parentElement.dataset.slug, { push: true });
-});
 
 /* ==========================================================================
-   Reveal on scroll + active nav link
+   Reveal on scroll + current section in the nav
    ========================================================================== */
 const io = new IntersectionObserver((entries) => {
   entries.forEach((e) => {
     if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
   });
-}, { rootMargin: '0px 0px -8% 0px' });
-document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+}, { rootMargin: '0px 0px -6% 0px' });
+document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
 
-const links = [...nav.querySelectorAll('a')];
+const navLinks = [...document.querySelectorAll('.nav__links a')];
 const spy = new IntersectionObserver((entries) => {
   entries.forEach((e) => {
     if (!e.isIntersecting) return;
-    links.forEach((l) => l.classList.toggle('is-active', l.getAttribute('href') === '#' + e.target.id));
+    navLinks.forEach((l) => {
+      if (l.getAttribute('href') === '#' + e.target.id) l.setAttribute('aria-current', 'true');
+      else l.removeAttribute('aria-current');
+    });
   });
 }, { rootMargin: '-45% 0px -50% 0px' });
 document.querySelectorAll('main section[id]').forEach((s) => spy.observe(s));
 
-/* ==========================================================================
-   Missing images → labeled placeholder showing where the file should go
-   ========================================================================== */
+/* Missing images show where the file should go */
 document.addEventListener('error', (e) => {
   const img = e.target;
   if (img.tagName !== 'IMG' || !img.closest('.shot')) return;
-  img.closest('.shot').classList.add('is-missing');
+  const shot = img.closest('.shot');
+  shot.classList.add('is-missing');
+  shot.querySelector('.frame__img').dataset.path = img.getAttribute('src');
 }, true);
 
-const shot = (img, index, extra = '') => `
+const shotHTML = (img, index, extra = '') => `
   <figure class="shot ${extra}" data-index="${index}">
-    <button class="shot__btn" type="button" aria-label="Enlarge image" data-path="${esc(img.src)}">
-      <img src="${esc(img.src)}" alt="${esc(img.alt || img.caption || '')}" loading="lazy" decoding="async">
+    <button class="shot__btn" type="button" aria-label="Enlarge: ${esc(img.alt || img.caption || 'image')}">
+      <span class="frame"><span class="frame__img">
+        <img src="${esc(img.src)}" srcset="${srcset(img.src)}" sizes="(max-width: 1200px) 100vw, 1140px" alt="${esc(img.alt || img.caption || '')}" width="${img.w || 2000}" height="${img.h || 1250}" loading="lazy" decoding="async">
+      </span></span>
     </button>
-    ${img.caption ? `<figcaption class="mono">${esc(img.caption)}</figcaption>` : ''}
+    ${img.caption ? `<figcaption>${esc(img.caption)}</figcaption>` : ''}
   </figure>`;
 
 /* ==========================================================================
-   Case study dialog
+   Case study dialog. Opens from the tile that was clicked and closes back
+   toward it; transitions retarget from their current value if interrupted.
    ========================================================================== */
 const caseEl = document.getElementById('case');
 const caseBody = document.getElementById('case-body');
 const caseScroll = document.getElementById('case-scroll');
-const casePos = document.getElementById('case-pos');
 let current = -1;
 let pushedHistory = false;
 let lastFocus = null;
+let closeTimer = null;
 
 function renderCase(i) {
   const p = PROJECTS[i];
@@ -118,48 +134,45 @@ function renderCase(i) {
   let n = 0;
   const st = () => `style="--i:${n++}"`;
 
-  caseEl.style.setProperty('--project', p.color);
-  casePos.textContent = `${pad(i + 1)} / ${pad(PROJECTS.length)}`;
   caseBody.innerHTML = `
-    <header class="case__head">
-      <p class="mono muted" ${st()}>${pad(i + 1)} — ${esc(p.year)}</p>
-      <h1 class="case__title" id="case-title" ${st()}>${esc(p.title)}</h1>
-      <p class="case__summary" ${st()}>${esc(p.summary)}</p>
-      <dl class="case__meta" ${st()}>
-        <div><dt class="mono">Role</dt><dd>${esc(p.role)}</dd></div>
-        <div><dt class="mono">Year</dt><dd>${esc(p.year)}</dd></div>
-        <div><dt class="mono">Stack</dt><dd>${p.stack.map(esc).join(', ')}</dd></div>
-        <div><dt class="mono">Links</dt><dd class="case__links">${p.links.map((l) =>
-          `<a href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</dd></div>
+    <header class="case__head" ${st()}>
+      <p class="case__kicker mono">${esc(p.year)}, ${p.tags.map(esc).join(', ')}</p>
+      <h1 class="case__title" id="case-title">${esc(p.title)}</h1>
+      <p class="case__summary">${esc(p.summary)}</p>
+      <dl class="case__meta">
+        <div><dt>Role</dt><dd>${esc(p.role)}</dd></div>
+        <div><dt>Stack</dt><dd>${p.stack.map(esc).join(', ')}</dd></div>
+        <div><dt>Links</dt><dd class="case__links">${p.links.map((l) =>
+          `<a class="text-link" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ${icon('arrow-up-right')}</a>`).join('')}</dd></div>
       </dl>
     </header>
 
-    ${p.cover ? `<div ${st()}>${shot(p.cover, 0, 'shot--cover')}</div>` : ''}
+    ${p.cover ? `<div ${st()}>${shotHTML(p.cover, 0, 'shot--cover')}</div>` : ''}
 
     <section class="case__section" ${st()}>
-      <h2 class="mono label">Overview</h2>
+      <h2 class="case__h">Overview</h2>
       <p class="case__lead">${esc(p.overview)}</p>
     </section>
 
     <section class="case__section" ${st()}>
-      <h2 class="mono label">What I built</h2>
-      <ol class="built">${p.built.map((b) => `<li>${esc(b)}</li>`).join('')}</ol>
+      <h2 class="case__h">What I built</h2>
+      <ul class="built">${p.built.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
     </section>
 
     ${p.gallery?.length ? `
-    <section class="case__section case__section--wide">
-      <h2 class="mono label">Screens</h2>
-      <div class="gallery">${p.gallery.map((g, k) => shot(g, k + (p.cover ? 1 : 0))).join('')}</div>
+    <section class="case__section case__section--wide" ${st()}>
+      <h2 class="case__h">Screens</h2>
+      <div class="gallery">${p.gallery.map((g, k) => shotHTML(g, k + (p.cover ? 1 : 0))).join('')}</div>
     </section>` : ''}
 
-    <section class="case__section">
-      <h2 class="mono label">Outcome</h2>
+    <section class="case__section" ${st()}>
+      <h2 class="case__h">Outcome</h2>
       <p class="case__lead">${esc(p.outcome)}</p>
     </section>
 
-    <a class="case__next" href="#/work/${next.slug}" data-goto="${next.slug}" style="--next:${next.color}">
-      <span class="mono muted">Next project</span>
-      <span class="case__next-title">${esc(next.title)} <span aria-hidden="true">→</span></span>
+    <a class="case__next" href="#/work/${esc(next.slug)}" data-goto="${esc(next.slug)}" ${st()}>
+      <span class="case__next-label">Next project</span>
+      <span class="case__next-title">${esc(next.title)} ${icon('arrow-right')}</span>
     </a>`;
 
   caseBody.dataset.images = JSON.stringify(images);
@@ -167,44 +180,70 @@ function renderCase(i) {
   current = i;
 }
 
-function openCase(slug, { push = false, replace = false } = {}) {
+function setOrigin(x, y) {
+  caseEl.style.setProperty('--ox', `${x}px`);
+  caseEl.style.setProperty('--oy', `${y}px`);
+}
+
+function openCase(slug, { push = false, replace = false, origin = null } = {}) {
   const i = PROJECTS.findIndex((p) => p.slug === slug);
   if (i < 0) return;
-  hidePreview();
   if (push) { history.pushState({ case: slug }, '', `#/work/${slug}`); pushedHistory = true; }
   else if (replace) history.replaceState({ case: slug }, '', `#/work/${slug}`);
 
-  if (caseEl.open) {
-    // Switching projects: quick cross-fade
+  if (caseEl.open && !caseEl.classList.contains('is-closing')) {
+    // Switching projects inside the dialog: quick cross-fade
     caseBody.classList.add('is-switching');
-    setTimeout(() => { renderCase(i); caseBody.classList.remove('is-switching'); }, reduced ? 0 : 180);
+    setTimeout(() => { renderCase(i); caseBody.classList.remove('is-switching'); }, reduced() ? 0 : 180);
     return;
   }
-  lastFocus = document.activeElement;
-  renderCase(i);
-  root.classList.add('no-scroll');
-  caseEl.classList.remove('is-closing');
-  caseEl.showModal();
-  caseEl.querySelector('.case__close').focus({ preventScroll: true });
+  clearTimeout(closeTimer);
+  if (origin) setOrigin(origin.x, origin.y);
+  else setOrigin(innerWidth / 2, innerHeight / 3);
+  if (!caseEl.open) {
+    lastFocus = document.activeElement;
+    renderCase(i);
+    caseEl.classList.add('is-entering');
+    caseEl.showModal();
+    root.classList.add('no-scroll');
+    caseEl.querySelector('[data-close]').focus({ preventScroll: true });
+    caseEl.getBoundingClientRect(); // commit the start state so the transition runs
+  } else {
+    renderCase(i);
+  }
+  caseEl.classList.remove('is-entering', 'is-closing');
 }
 
 function hideCase() {
-  if (!caseEl.open) return;
+  if (!caseEl.open || caseEl.classList.contains('is-closing')) return;
+  // Close back toward the tile this project lives in
+  const tile = list.querySelector(`[data-slug="${PROJECTS[current]?.slug}"]`);
+  if (tile) {
+    const r = tile.getBoundingClientRect();
+    setOrigin(r.left + r.width / 2, Math.min(Math.max(r.top + r.height / 2, 0), innerHeight));
+  }
   caseEl.classList.add('is-closing');
-  setTimeout(() => {
+  closeTimer = setTimeout(() => {
     caseEl.close();
     caseEl.classList.remove('is-closing');
     root.classList.remove('no-scroll');
-    const row = list.querySelector(`[data-slug="${PROJECTS[current]?.slug}"] .project__link`);
-    (row || lastFocus)?.focus({ preventScroll: true });
+    (tile || lastFocus)?.focus({ preventScroll: true });
     current = -1;
-  }, reduced ? 0 : 280);
+  }, reduced() ? 200 : 320);
 }
 
 function requestClose() {
-  if (pushedHistory) { pushedHistory = false; history.back(); }   // popstate will hide it
+  if (pushedHistory) { pushedHistory = false; history.back(); } // popstate hides it
   else { history.replaceState(null, '', '#work'); hideCase(); }
 }
+
+document.addEventListener('click', (e) => {
+  const tile = e.target.closest('.tile[data-slug]');
+  if (!tile || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault();
+  const r = tile.getBoundingClientRect();
+  openCase(tile.dataset.slug, { push: true, origin: { x: e.clientX || r.left + r.width / 2, y: e.clientY || r.top + r.height / 2 } });
+});
 
 const step = (dir) => openCase(PROJECTS[(current + dir + PROJECTS.length) % PROJECTS.length].slug, { replace: true });
 document.getElementById('case-prev').addEventListener('click', () => step(-1));
@@ -219,18 +258,12 @@ caseEl.addEventListener('click', (e) => {
   if (s) openLightbox(+s.parentElement.dataset.index);
 });
 caseEl.addEventListener('keydown', (e) => {
-  if (lightbox.open) return;
+  if (lightbox.open || e.target.closest('input, textarea')) return;
   if (e.key === 'ArrowRight') step(1);
   if (e.key === 'ArrowLeft') step(-1);
 });
 
-// Reading progress bar in the case header
-caseScroll.addEventListener('scroll', () => {
-  const max = caseScroll.scrollHeight - caseScroll.clientHeight;
-  caseEl.style.setProperty('--progress', max > 0 ? caseScroll.scrollTop / max : 0);
-}, { passive: true });
-
-// Routing: #/work/<slug> opens a case study (deep-linkable, back button closes it)
+// Routing: #/work/<slug> opens a case study (deep-linkable; Back closes it)
 function route() {
   const m = location.hash.match(/^#\/work\/([\w-]+)/);
   if (m) openCase(m[1]);
@@ -239,9 +272,13 @@ function route() {
 addEventListener('popstate', route);
 
 /* ==========================================================================
-   Lightbox
+   Lightbox. Drag tracks 1:1 from where it was grabbed; on release the
+   momentum is projected forward (Apple's decay formula) to pick the next
+   image or snap back, and a spring settles it from the current position.
+   Buttons and arrow keys do the same thing without a gesture.
    ========================================================================== */
 const lightbox = document.getElementById('lightbox');
+const stage = document.getElementById('lb-stage');
 const lbImg = document.getElementById('lb-img');
 const lbCap = document.getElementById('lb-cap');
 let lbItems = [];
@@ -252,84 +289,100 @@ function openLightbox(index) {
   const missing = new Set([...caseBody.querySelectorAll('.shot.is-missing')].map((f) => +f.dataset.index));
   lbItems = all.map((img, k) => ({ ...img, k })).filter((img) => !missing.has(img.k));
   lbIndex = Math.max(0, lbItems.findIndex((img) => img.k === index));
-  showLightboxImage();
+  showImage();
+  lbImg.style.transform = '';
   lightbox.showModal();
 }
-function showLightboxImage() {
+function showImage() {
   const img = lbItems[lbIndex];
   if (!img) return;
   lbImg.src = img.src;
+  lbImg.width = img.w || 2000;
+  lbImg.height = img.h || 1250;
   lbImg.alt = img.alt || img.caption || '';
-  lbCap.textContent = `${lbIndex + 1} / ${lbItems.length}${img.caption ? ' — ' + img.caption : ''}`;
+  lbCap.textContent = img.caption || img.alt || '';
   lightbox.classList.toggle('is-single', lbItems.length < 2);
 }
-const lbStep = (dir) => { lbIndex = (lbIndex + dir + lbItems.length) % lbItems.length; showLightboxImage(); };
 
-document.getElementById('lb-prev').addEventListener('click', () => lbStep(-1));
-document.getElementById('lb-next').addEventListener('click', () => lbStep(1));
+const project = (v, rate = 0.998) => (v / 1000) * rate / (1 - rate);
+function settle(x, opacity = 1) {
+  lbImg.classList.add('is-settling');
+  lbImg.style.transform = `translateX(${x}px)`;
+  lbImg.style.opacity = opacity;
+}
+function go(dir) {
+  if (lbItems.length < 2) return settle(0);
+  const w = stage.clientWidth;
+  if (reduced()) {
+    lbImg.classList.add('is-settling');
+    lbImg.style.opacity = 0;
+    setTimeout(() => { lbIndex = (lbIndex + dir + lbItems.length) % lbItems.length; showImage(); lbImg.style.opacity = 1; }, 200);
+    return;
+  }
+  // Exit along the gesture's direction, enter from the opposite side (same path)
+  settle(-dir * w, 0);
+  setTimeout(() => {
+    lbIndex = (lbIndex + dir + lbItems.length) % lbItems.length;
+    showImage();
+    lbImg.classList.remove('is-settling');
+    lbImg.style.transform = `translateX(${dir * w * 0.35}px)`;
+    lbImg.style.opacity = 0;
+    lbImg.getBoundingClientRect();
+    settle(0, 1);
+  }, 180);
+}
+
+let drag = null;
+stage.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || lbItems.length < 2) return;
+  // Start from the image's live position so a grab mid-animation doesn't jump
+  const live = new DOMMatrixReadOnly(getComputedStyle(lbImg).transform).m41;
+  lbImg.classList.remove('is-settling');
+  lbImg.style.transform = `translateX(${live}px)`;
+  drag = { id: e.pointerId, x0: e.clientX - live, y0: e.clientY, live, axis: null, hist: [{ x: e.clientX, t: e.timeStamp }] };
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x0;
+  if (!drag.axis) {
+    // ~10px of hysteresis before committing to a direction
+    const mx = Math.abs(e.clientX - (drag.x0 + drag.live)), my = Math.abs(e.clientY - drag.y0);
+    if (mx < 10 && my < 10) return;
+    drag.axis = mx > my ? 'x' : 'y';
+    if (drag.axis === 'x') stage.classList.add('is-dragging');
+  }
+  if (drag.axis !== 'x') return;
+  lbImg.style.transform = `translateX(${dx}px)`;
+  drag.hist.push({ x: e.clientX, t: e.timeStamp });
+  if (drag.hist.length > 6) drag.hist.shift();
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  stage.classList.remove('is-dragging');
+  const d = drag;
+  drag = null;
+  if (d.axis !== 'x') return settle(0);
+  const first = d.hist[0], last = d.hist[d.hist.length - 1];
+  const v = last.t > first.t ? ((last.x - first.x) / (last.t - first.t)) * 1000 : 0; // px/s
+  const offset = last.x - d.x0;
+  const projected = offset + project(v);
+  const w = stage.clientWidth;
+  if (Math.abs(projected) > w * 0.35) go(projected < 0 ? 1 : -1);
+  else settle(0);
+}
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+
+document.getElementById('lb-prev').addEventListener('click', () => go(-1));
+document.getElementById('lb-next').addEventListener('click', () => go(1));
 lightbox.addEventListener('click', (e) => {
   if (e.target === lightbox || e.target.closest('[data-close]')) lightbox.close();
 });
 lightbox.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight') lbStep(1);
-  if (e.key === 'ArrowLeft') lbStep(-1);
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
 });
-let touchX = null;
-lightbox.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
-lightbox.addEventListener('touchend', (e) => {
-  if (touchX === null) return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1);
-  touchX = null;
-});
-
-/* ==========================================================================
-   Cursor-following project preview (pointer devices only)
-   Shows the project's cover image if it exists, otherwise its color.
-   ========================================================================== */
-const preview = document.getElementById('preview');
-const label = document.getElementById('preview-label');
-const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-const coverOk = {};
-function hidePreview() {
-  preview.classList.remove('is-visible');
-  preview.style.transform = '';
-}
-
-PROJECTS.forEach((p) => {
-  if (!p.cover) return;
-  const im = new Image();
-  im.onload = () => { coverOk[p.slug] = p.cover.src; };
-  im.src = p.cover.src;
-});
-
-if (finePointer) {
-  let x = 0, y = 0, px = 0, py = 0, raf = null;
-  const follow = () => {
-    px += (x - px) * (reduced ? 1 : 0.18);
-    py += (y - py) * (reduced ? 1 : 0.18);
-    preview.style.translate = `${px}px ${py}px`;
-    raf = Math.abs(x - px) + Math.abs(y - py) > 0.5 ? requestAnimationFrame(follow) : null;
-  };
-  addEventListener('mousemove', (e) => {
-    x = e.clientX + 40; y = e.clientY;
-    if (!raf) raf = requestAnimationFrame(follow);
-  });
-
-  list.querySelectorAll('.project').forEach((p) => {
-    p.addEventListener('mouseenter', () => {
-      if (caseEl.open) return;
-      const src = coverOk[p.dataset.slug];
-      preview.style.setProperty('--preview-color', p.dataset.color);
-      preview.style.backgroundImage = src ? `url("${src}")` : '';
-      preview.classList.toggle('has-image', !!src);
-      label.textContent = p.querySelector('.project__title').textContent;
-      preview.classList.add('is-visible');
-      preview.style.transform = 'translate(0, -50%) scale(1)';
-    });
-    p.addEventListener('mouseleave', hidePreview);
-  });
-}
 
 // Open a case study if the page loaded with #/work/<slug>
 route();

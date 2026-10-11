@@ -18,7 +18,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=232cd053">
+  <link rel="stylesheet" href="styles.css?v=c0968d00">
   <script>
     document.documentElement.classList.add('js');
     // Apply a saved theme choice before first paint (no flash)
@@ -94,11 +94,11 @@
         </div>
         <div class="about__side">
           <div class="profile" data-reveal style="--i:2">
-            <!-- Headshot: save a portrait photo (about 4:5) as images/headshot.jpg, then uncomment the <img> below. Initials show until then. -->
+            <!-- Headshot: images/headshot.jpg. The initials underneath show only if the photo fails to load. -->
             <figure class="headshot frame">
               <span class="frame__img">
                 <span class="headshot__initials" aria-hidden="true">EC</span>
-                <!-- <img src="images/headshot.jpg" alt="Ethan Chen" width="400" height="500" loading="lazy"> -->
+                <img src="images/headshot.jpg" alt="Ethan Chen" width="400" height="400" loading="lazy" decoding="async">
               </span>
             </figure>
             <div>

@@ -359,7 +359,7 @@ p { text-wrap: pretty; }
 .profile { display: grid; grid-template-columns: 7.5rem 1fr; gap: 1.25rem; align-items: center; }
 .headshot .frame__img { --ar: 4 / 5; display: grid; place-items: center; position: relative; }
 .headshot__initials { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.03em; color: var(--ink-2); }
-.headshot img { position: absolute; inset: 0; }
+.headshot img { position: absolute; inset: 0; object-position: 50% 30%; }
 .edu__school { font-size: var(--t-h3); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; }
 .edu__detail { color: var(--ink-2); }
 

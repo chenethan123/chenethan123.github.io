@@ -46,7 +46,7 @@
   --t-h3: 1.25rem;
   --t-h2: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
   --t-h1: clamp(2.3rem, 1.3rem + 3.1vw, 3.75rem);
-  --t-mail: clamp(1.9rem, 0.8rem + 4.6vw, 4.6rem);
+  --t-mail: clamp(1.35rem, 0.5rem + 4.6vw, 4.6rem);
 
   --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
   --section: clamp(5rem, 3rem + 6.5vw, 8.5rem);
@@ -370,7 +370,7 @@ p { text-wrap: pretty; }
 .contact__mail {
   position: relative; display: inline-block; margin: 1.5rem 0 2rem;
   font-size: var(--t-mail); font-weight: 600; line-height: 1; letter-spacing: -0.045em;
-  overflow-wrap: anywhere; padding-bottom: 0.08em;
+  overflow-wrap: break-word; padding-bottom: 0.08em;
   transition: color 0.25s ease;
 }
 .contact__mail::after {
@@ -381,6 +381,18 @@ p { text-wrap: pretty; }
 .contact__mail:hover { color: var(--accent); }
 .contact__mail:hover::after { transform: scaleX(1); }
 .contact__links { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+/* Local time: mine (ET) next to the visitor's, with the hour difference */
+.clocks[hidden] { display: none; }
+.clocks {
+  display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 1rem clamp(2rem, 6vw, 4.5rem);
+  margin-bottom: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--line); max-width: 36rem;
+}
+.clock dt { color: var(--ink-2); font-size: var(--t-small); margin-bottom: 0.35rem; }
+.clock__time { font-size: var(--t-h2); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.clock__zone { color: var(--ink-2); font: 500 0.8125rem var(--mono); margin-left: 0.25rem; }
+.clock__note { color: var(--ink-2); font-size: var(--t-small); margin-top: 0.3rem; }
+@media (max-width: 420px) { .clocks { grid-template-columns: 1fr 1fr; gap: 1rem; } }
 
 /* Footer */
 .footer {

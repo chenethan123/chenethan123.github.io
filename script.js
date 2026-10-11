@@ -28,6 +28,56 @@ themeButtons.forEach((b) => b.addEventListener('click', () => {
 }));
 
 /* ==========================================================================
+   Local time: mine (Eastern) and the visitor's, with the hour difference
+   ========================================================================== */
+const MY_ZONE = 'America/New_York';
+const yourZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const timeFmt = (zone) => new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone: zone });
+// Short zone name (EDT, PST); where there isn't one ("GMT+1"), use the city instead
+function zoneName(zone, d) {
+  const short = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'short' })
+    .formatToParts(d).find((p) => p.type === 'timeZoneName')?.value || '';
+  if (!/^(GMT|UTC)[+-]/.test(short)) return short;
+  const city = zone.split('/').pop().replace(/_/g, ' ');
+  // Browsers still report a few old zone IDs
+  return ({ Calcutta: 'Kolkata', Saigon: 'Ho Chi Minh City', Kiev: 'Kyiv', Rangoon: 'Yangon', Katmandu: 'Kathmandu' })[city] || city;
+}
+// Minutes east of UTC for a zone at a given moment (handles daylight saving)
+function offsetMinutes(zone, d) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric',
+  }).formatToParts(d).map((p) => [p.type, +p.value]));
+  const asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  return Math.round((asUTC - d.getTime()) / 60000);
+}
+function describeDiff(minutes) {
+  if (minutes === 0) return 'Same time as me';
+  const abs = Math.abs(minutes), h = Math.floor(abs / 60), m = abs % 60;
+  const amount = [h && `${h} ${h === 1 ? 'hour' : 'hours'}`, m && `${m} min`].filter(Boolean).join(' ');
+  return `${amount} ${minutes > 0 ? 'ahead of' : 'behind'} me`;
+}
+const clocks = document.getElementById('clocks');
+if (clocks && yourZone) {
+  const els = ['clock-mine', 'zone-mine', 'clock-yours', 'zone-yours', 'clock-diff'].map((id) => document.getElementById(id));
+  const [mine, mineZone, yours, yoursZone, diff] = els;
+  const mineFmt = timeFmt(MY_ZONE), yoursFmt = timeFmt(yourZone);
+  const tick = () => {
+    const now = new Date();
+    mine.textContent = mineFmt.format(now);
+    mine.dateTime = now.toISOString();
+    mineZone.textContent = zoneName(MY_ZONE, now);
+    yours.textContent = yoursFmt.format(now);
+    yours.dateTime = now.toISOString();
+    yoursZone.textContent = zoneName(yourZone, now);
+    diff.textContent = describeDiff(offsetMinutes(yourZone, now) - offsetMinutes(MY_ZONE, now));
+  };
+  tick();
+  clocks.hidden = false;
+  // Update on each minute boundary
+  setTimeout(() => { tick(); setInterval(tick, 60000); }, 60000 - (Date.now() % 60000) + 50);
+}
+
+/* ==========================================================================
    Mobile menu
    ========================================================================== */
 const menu = document.getElementById('menu');

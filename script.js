@@ -194,8 +194,8 @@ function renderCase(i) {
       <dl class="case__meta">
         <div><dt>Role</dt><dd>${esc(p.role)}</dd></div>
         <div><dt>Stack</dt><dd>${p.stack.map(esc).join(', ')}</dd></div>
-        <div><dt>Links</dt><dd class="case__links">${p.links.map((l) =>
-          `<a class="text-link" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ${icon('arrow-up-right')}</a>`).join('')}</dd></div>
+        ${p.links.length ? `<div><dt>Links</dt><dd class="case__links">${p.links.map((l) =>
+          `<a class="text-link" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ${icon('arrow-up-right')}</a>`).join('')}</dd></div>` : ''}
       </dl>
     </header>
 

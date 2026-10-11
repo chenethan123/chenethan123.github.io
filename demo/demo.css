@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Shared layer for the live demos: the portfolio's nav island, pill buttons,
+   press feedback, spring motion, theme switch and accessibility settings.
+   Loaded after each demo's own styles.
+   ========================================================================== */
+@font-face { font-family: "Geist"; src: url("../fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  --d-bg: #f7f7f8; --d-surface: #fdfdfd; --d-ink: #18181b; --d-ink-2: #52525b;
+  --d-line: rgb(24 24 27 / 0.09); --d-line-strong: rgb(24 24 27 / 0.16);
+  --d-accent: #b5491c; --d-glass: rgb(250 250 251 / 0.72);
+  --d-shadow: 0 1px 2px rgb(24 24 39 / 0.04), 0 12px 32px -12px rgb(24 24 39 / 0.14);
+  --d-gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
+  --spring: linear(0, 0.057, 0.18, 0.32, 0.454, 0.572, 0.67, 0.749, 0.812, 0.86, 0.896, 0.924, 0.944, 0.959, 0.971, 0.979, 0.985, 0.989, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1);
+  --spring-t: 0.59s;
+  --press: 100ms;
+}
+@supports not (transition-timing-function: linear(0, 1)) { :root { --spring: cubic-bezier(0.22, 1, 0.36, 1); } }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --d-bg: #0d0d0f; --d-surface: #161619; --d-ink: #ededef; --d-ink-2: #a1a1aa;
+    --d-line: rgb(255 255 255 / 0.09); --d-line-strong: rgb(255 255 255 / 0.18);
+    --d-accent: #e68c56; --d-glass: rgb(22 22 25 / 0.7);
+    --d-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  --d-bg: #0d0d0f; --d-surface: #161619; --d-ink: #ededef; --d-ink-2: #a1a1aa;
+  --d-line: rgb(255 255 255 / 0.09); --d-line-strong: rgb(255 255 255 / 0.18);
+  --d-accent: #e68c56; --d-glass: rgb(22 22 25 / 0.7);
+  --d-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+html { -webkit-tap-highlight-color: transparent; }
+a, button, select, label { touch-action: manipulation; }
+:focus-visible { outline: 2px solid var(--d-accent); outline-offset: 3px; border-radius: 6px; }
+.d-icon { width: 1.05em; height: 1.05em; flex: none; fill: currentColor; }
+
+/* Floating translucent nav island (same as the portfolio) */
+.d-nav-shell {
+  position: fixed; inset: max(0.75rem, env(safe-area-inset-top)) 0 auto; z-index: 10; pointer-events: none;
+}
+.d-nav {
+  pointer-events: auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  width: calc(100% - 2 * var(--d-gutter)); max-width: calc(1400px - 2 * var(--d-gutter)); margin-inline: auto;
+  height: 3.5rem; padding: 0 0.5rem 0 1.1rem; border-radius: 999px;
+  background: var(--d-glass);
+  backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%);
+  box-shadow: inset 0 0 0 1px var(--d-line), inset 0 1px 0 rgb(255 255 255 / 0.18), var(--d-shadow);
+  font: 500 0.95rem/1 "Geist", system-ui, sans-serif; color: var(--d-ink);
+}
+.d-brand { display: inline-flex; align-items: center; gap: 0.6rem; font-weight: 600; letter-spacing: -0.015em; color: var(--d-ink); text-decoration: none; white-space: nowrap; }
+.d-brand__mark {
+  display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 999px;
+  background: var(--d-ink); color: var(--d-bg); font-size: 0.72rem; font-weight: 600; letter-spacing: -0.02em;
+}
+.d-brand__sep { color: var(--d-ink-2); font-weight: 400; }
+.d-brand__page { color: var(--d-ink-2); font-weight: 500; }
+.d-links { display: flex; align-items: center; gap: 0.35rem; }
+
+/* Pill buttons with instant press feedback */
+.d-btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  height: 2.5rem; padding: 0 1rem; border-radius: 999px; border: 1px solid var(--d-line-strong);
+  background: transparent; color: var(--d-ink); text-decoration: none; white-space: nowrap;
+  font: 500 0.9rem/1 "Geist", system-ui, sans-serif; cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform var(--press) ease-out;
+}
+.d-btn:hover { border-color: var(--d-ink); background: var(--d-surface); }
+.d-btn:active { transform: scale(0.96); }
+.d-btn .d-icon { transition: transform var(--spring-t) var(--spring); }
+.d-btn:hover .d-icon--back { transform: translateX(-2px); }
+.d-btn:hover .d-icon--out { transform: translate(2px, -2px); }
+@media (max-width: 640px) {
+  .d-brand__sep, .d-brand__page { display: none; }
+  .d-btn .d-label-long { display: none; }
+}
+
+/* Theme switch (Auto / Light / Dark), shared preference with the portfolio */
+.d-footer {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem;
+  width: 100%; max-width: 1400px; margin: 0 auto; padding: 2rem var(--d-gutter) 2.5rem;
+  border-top: 1px solid var(--d-line); color: var(--d-ink-2);
+  font: 400 0.875rem/1.4 "Geist", system-ui, sans-serif;
+}
+.d-footer a { color: inherit; text-decoration: none; }
+.d-footer a:hover { color: var(--d-ink); }
+.d-theme { display: inline-flex; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--d-ink) 6%, transparent); }
+.d-theme button {
+  height: 2rem; padding: 0 0.85rem; border: 0; border-radius: 999px; background: transparent;
+  color: var(--d-ink-2); font: 500 0.8125rem/1 "Geist", system-ui, sans-serif; cursor: pointer;
+  transition: background-color 0.25s ease, color 0.2s ease, transform var(--press) ease-out;
+}
+.d-theme button:hover { color: var(--d-ink); }
+.d-theme button:active { transform: scale(0.95); }
+.d-theme button[aria-pressed="true"] { background: var(--d-surface); color: var(--d-ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), inset 0 0 0 1px var(--d-line); }
+
+/* Entrance: content rises in sequence on load */
+.js [data-rise] { opacity: 0; transform: translateY(14px); }
+.js [data-rise].is-in {
+  opacity: 1; transform: none;
+  transition: opacity 0.5s ease, transform var(--spring-t) var(--spring);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .js [data-rise] { transform: none; }
+  .js [data-rise].is-in { transition: opacity 0.3s ease; }
+  .d-btn .d-icon { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .d-nav { background: var(--d-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .d-nav { background: var(--d-bg); box-shadow: inset 0 0 0 1px var(--d-ink); }
+  .d-btn { border-color: var(--d-ink); }
+}

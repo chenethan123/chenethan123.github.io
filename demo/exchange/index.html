@@ -6,30 +6,43 @@
   <title>ExchangeLab demo, Ethan Chen</title>
   <meta name="description" content="Live demo: trade against market-making, momentum and random bots on a price-time-priority matching engine, running in your browser." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%233987e5'/%3E%3Cpath d='M3 11l3-3 2 2 5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="../../fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../demo.css" />
   <style>
     /* Portfolio demo bar (not part of the ExchangeLab repo) */
-    .demo-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-      padding: 8px 20px; font-size: 12.5px; color: var(--ink-2); background: var(--surface); border-bottom: 1px solid var(--border); }
-    .demo-bar a { color: var(--ink-1); text-decoration: none; font-weight: 500; }
-    .demo-bar a:hover { text-decoration: underline; }
-    .demo-bar .demo-links { display: flex; gap: 18px; }
-    .demo-bar b { color: var(--ink-1); font-weight: 600; }
+    :root { --font: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .demo-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; flex-wrap: wrap;
+      padding: 0.6rem clamp(1rem, 2.6vw, 2.5rem); background: var(--surface); border-bottom: 1px solid var(--border);
+      font: 400 0.875rem/1.4 var(--font); color: var(--ink-2);
+    }
+    .demo-bar .d-btn { height: 2.25rem; border-color: var(--border-strong); color: var(--ink-1); }
+    .demo-bar .d-btn:hover { border-color: var(--ink-1); background: var(--surface-2); }
+    .demo-bar__note { display: inline-flex; align-items: center; gap: 0.5rem; }
+    .demo-bar__note::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: #22a55a; box-shadow: 0 0 0 4px rgb(34 165 90 / 0.15); }
+    .demo-bar__note b { color: var(--ink-1); font-weight: 600; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    @media (max-width: 640px) { .demo-bar .d-label-long { display: none; } .demo-bar__note span { display: none; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
   </style>
   <script>
     try {
-      const t = localStorage.getItem("exchangelab.theme");
-      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      const t = localStorage.getItem("exchangelab.theme") || localStorage.getItem("theme");
+      // Same rule as the portfolio: a saved choice wins, otherwise follow the system
+      document.documentElement.dataset.theme = (t === "light" || t === "dark") ? t
+        : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
     } catch {}
   </script>
 </head>
 <body>
   <div class="demo-bar">
-    <span><b>Live demo.</b> The matching engine, order book and bots run in your browser, ported from the Python code.</span>
-    <span class="demo-links"><a href="../../#/work/exchangelab">← Case study</a><a href="https://github.com/chenethan123/ExchangeLab" target="_blank" rel="noopener">Source on GitHub ↗</a></span>
+    <p class="demo-bar__note"><b>Live demo.</b><span>The matching engine, order book and bots run in your browser, ported from the Python code.</span></p>
+    <div class="d-links">
+      <a class="d-btn" href="../../#/work/exchangelab"><svg class="d-icon d-icon--back" aria-hidden="true"><use href="../../icons.svg#i-arrow-left"/></svg><span class="d-label-long">Case study</span><span class="visually-hidden">Back to the case study</span></a>
+      <a class="d-btn" href="https://github.com/chenethan123/ExchangeLab" target="_blank" rel="noopener"><svg class="d-icon d-icon--out" aria-hidden="true"><use href="../../icons.svg#i-github-logo"/></svg><span class="d-label-long">Source</span><span class="visually-hidden">Source on GitHub</span></a>
+    </div>
   </div>
   <nav class="nav">
     <div class="nav-brand">

@@ -36,7 +36,8 @@
     header.top a:hover { color: var(--ink); }
 
     .intro { padding-block: clamp(2rem, 5vw, 4rem) 1.5rem; display: grid; gap: 1rem; }
-    .eyebrow { font-family: var(--mono); font-size: .8rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: .08em; }
+    .eyebrow { display: inline-flex; align-items: center; gap: .5rem; font-size: .875rem; font-weight: 500; color: var(--ink-2); }
+    .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: #22a55a; box-shadow: 0 0 0 4px rgb(34 165 90 / 0.15); }
     h1 { margin: 0; font: 600 clamp(2.1rem, 1.3rem + 3vw, 3.5rem)/1.05 "Geist", system-ui, sans-serif; letter-spacing: -0.035em; text-wrap: balance; }
     .intro p { margin: 0; max-width: 62ch; color: var(--ink-2); }
 
@@ -86,21 +87,32 @@
     .explain p { margin: 0; color: var(--ink-2); font-size: .95rem; }
     @media (max-width: 760px) { .explain { grid-template-columns: 1fr; } .controls .note { margin-left: 0; } }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-      .ico { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.15em; margin-inline: 0.3em; }
+      main.wrap { padding-top: 5.5rem; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .btn, .run, select, .cat span { transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform var(--press) ease-out; }
+    .btn:active:not(:disabled), .run:active:not(:disabled) { transform: scale(0.97); }
+    .cat:active span { transform: scale(0.96); }
+    .ico { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.15em; margin-inline: 0.3em; }
   </style>
-  <script>try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <script>document.documentElement.classList.add('js'); try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <link rel="stylesheet" href="demo.css">
 </head>
 <body>
-  <header class="top wrap">
-    <a href="../#/work/cluster"><svg class="ico" aria-hidden="true"><use href="../icons.svg#i-arrow-left"/></svg>Back to case study</a>
-    <a href="https://github.com/chenethan123/Distributed-Computing-Cluster" target="_blank" rel="noopener">Source on GitHub<svg class="ico" aria-hidden="true"><use href="../icons.svg#i-arrow-up-right"/></svg></a>
-  </header>
+  <div class="d-nav-shell">
+    <nav class="d-nav" aria-label="Demo">
+      <a class="d-brand" href="../" translate="no"><span class="d-brand__mark" aria-hidden="true">EC</span>Ethan Chen<span class="d-brand__sep" aria-hidden="true">/</span><span class="d-brand__page">Compute Cluster demo</span></a>
+      <div class="d-links">
+        <a class="d-btn" href="../#/work/cluster"><svg class="d-icon d-icon--back" aria-hidden="true"><use href="../icons.svg#i-arrow-left"/></svg><span class="d-label-long">Case study</span><span class="visually-hidden">Back to the case study</span></a>
+        <a class="d-btn" href="https://github.com/chenethan123/Distributed-Computing-Cluster" target="_blank" rel="noopener"><svg class="d-icon d-icon--out" aria-hidden="true"><use href="../icons.svg#i-github-logo"/></svg><span class="d-label-long">Source</span><span class="visually-hidden">Source on GitHub</span></a>
+      </div>
+    </nav>
+  </div>
 
   <main class="wrap">
     <section class="intro">
-      <span class="eyebrow">Live demo · Distributed Compute Cluster</span>
-      <h1>One node vs. four.</h1>
-      <p>
+      <span class="eyebrow" data-rise>Live demo</span>
+      <h1 data-rise style="--i:1">One node vs. four.</h1>
+      <p data-rise style="--i:2">
         Both terminals run the same pipeline as the real cluster: split the input into chunks, bubble-sort
         each chunk on a worker node, then merge sorted files on the master as they come back. Here each
         “node” is a Web Worker running on your device, so the timings are real.
@@ -147,6 +159,15 @@
       <div><h2>Merge &amp; verify</h2><p>The master merges sorted chunks two at a time as they arrive, then checks the result is in order and identical to a reference sort, the same as <code>sort -n | diff</code>.</p></div>
     </section>
   </main>
+  <footer class="d-footer">
+    <span>© 2026 Ethan Chen</span>
+    <div class="d-theme" role="group" aria-label="Color theme">
+      <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+    </div>
+  </footer>
+  <script src="demo.js"></script>
 
 <script>
 // The worker: same bubble sort as nodeSortJob in binarySort.py

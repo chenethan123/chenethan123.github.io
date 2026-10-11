@@ -113,7 +113,7 @@ window.PROJECTS = [
     role: 'Design & engineering',
     stack: ['Swift', 'SwiftUI', 'SwiftData', 'Swift Charts', 'OpenAI API', 'XCTest'],
     links: [{ label: 'GitHub', href: 'https://github.com/chenethan123/FormulaQuizzer' }],
-    cover: { src: 'images/formula-quizzer/cover.png', alt: 'Formula Quizzer on three iPhones: the Today screen with a daily goal ring, a physics question answered correctly, and the Progress screen', w: 2000, h: 1000 },
+    cover: { src: 'images/formula-quizzer/cover.png', alt: 'Formula Quizzer on three iPhones: the Today screen with its daily goal, a calculus question answered correctly, and the Progress screen', w: 2000, h: 1000 },
     overview:
       'You pick your AP courses and Formula Quizzer builds quizzes around them, leaning toward the subjects you miss most. I first built it in Flutter with Supabase sync, then rebuilt it as a native SwiftUI app because the UI looked like a template and offline mode needed the server. The questions, AP catalog and adaptive logic carried over.',
     built: [
@@ -121,7 +121,7 @@ window.PROJECTS = [
       '70 hand-written questions with explanations, 35 AP subjects and their official course units, with answer choices shuffled every time',
       'AI questions from gpt-4o-mini once a subject’s questions run out, using a strict JSON format and a rule against repeating recent questions; the API key lives in the Keychain',
       'Timed quizzes: notifications at random times between two intervals that open a 3-question quiz',
-      'Daily goal ring, streaks, a 14-day chart and accuracy by subject, all stored on device with SwiftData',
+      'Daily goal, streaks, a 14-day chart and accuracy by subject, all stored on device with SwiftData',
       'A UI test that taps through every screen and saves the screenshots on this page',
     ],
     outcome:

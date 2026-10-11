@@ -132,4 +132,29 @@ window.PROJECTS = [
       { src: 'images/formula-quizzer/progress.png', caption: 'Today’s goal and focus list, two weeks of progress, and timed quizzes in Settings.', w: 2000, h: 1250 },
     ],
   },
+  {
+    slug: 'lane-robot',
+    title: 'Lane-Following Robot',
+    year: '2024',
+    tags: ['Python', 'OpenCV', 'Robotics'],
+    summary:
+      'Placeholder: an autonomous robot that detects two lane lines with a camera and steers itself between them.',
+    role: 'Design & engineering',
+    stack: ['Python', 'OpenCV', 'NumPy'],
+    links: [{ label: 'GitHub', href: 'https://github.com/chenethan123' }],
+    cover: { src: 'images/lane-robot/cover.png', alt: 'The lane-following robot driving between two taped lanes', w: 2000, h: 1000 },
+    overview:
+      'Placeholder: what the robot is, what hardware it ran on, and the problem you were solving. Two or three sentences.',
+    built: [
+      'Placeholder: lane detection (for example color masking, edge detection and line fitting)',
+      'Placeholder: how the two lane lines become a steering angle',
+      'Placeholder: motor control and how fast the loop runs',
+      'Placeholder: a problem you hit and how you fixed it',
+    ],
+    outcome: 'Placeholder: how well it drove, with a number if you have one (laps completed, speed, success rate).',
+    gallery: [
+      { src: 'images/lane-robot/detection.png', caption: 'Placeholder: camera view with the detected lanes drawn on top.', w: 2000, h: 1250 },
+      { src: 'images/lane-robot/robot.png', caption: 'Placeholder: photo of the robot.', w: 2000, h: 1250 },
+    ],
+  },
 ];

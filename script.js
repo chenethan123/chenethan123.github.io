@@ -149,7 +149,9 @@ document.querySelectorAll('main section[id]').forEach((s) => spy.observe(s));
 /* Missing images show where the file should go */
 document.addEventListener('error', (e) => {
   const img = e.target;
-  if (img.tagName !== 'IMG' || !img.closest('.shot')) return;
+  if (img.tagName !== 'IMG') return;
+  if (img.closest('.tile') && !img.closest('.shot')) { img.closest('.tile').classList.add('is-missing'); return; }
+  if (!img.closest('.shot')) return;
   const shot = img.closest('.shot');
   shot.classList.add('is-missing');
   shot.querySelector('.frame__img').dataset.path = img.getAttribute('src');

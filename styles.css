@@ -310,6 +310,12 @@ p { text-wrap: pretty; }
 .tile:active .frame { transform: scale(0.99); }
 .tile .frame { transition: transform var(--press) ease-out, box-shadow 0.3s ease; }
 .tile:hover .frame { box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow); }
+.tile.is-missing .frame__img {
+  display: grid; place-items: center; text-align: center; padding: 1rem;
+  background: repeating-linear-gradient(135deg, transparent 0 14px, var(--line) 14px 15px), var(--surface);
+}
+.tile.is-missing img { display: none; }
+.tile.is-missing .frame__img::after { content: "Images coming soon"; color: var(--ink-2); font: 500 0.9375rem var(--font); }
 .tile__meta { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-inline: 0.25rem; }
 .tile__title { font-size: var(--t-h3); letter-spacing: -0.015em; line-height: 1.25; display: inline-flex; align-items: center; gap: 0.45rem; }
 .tile__title .icon { width: 0.9em; height: 0.9em; color: var(--ink-2); transition: transform var(--spring-t) var(--spring), color 0.2s ease; }
@@ -330,6 +336,9 @@ p { text-wrap: pretty; }
 .work > li:nth-child(4n + 2), .work > li:nth-child(4n + 3) { grid-column: span 5; }
 .work > li:nth-child(4n + 2) .frame__img, .work > li:nth-child(4n + 3) .frame__img { --ar: 16 / 10; }
 .work > li:nth-child(4n + 2) { margin-top: clamp(2rem, 6vw, 5rem); }
+/* An odd project out spans the full row (no empty cell) */
+.work > li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.work > li:last-child:nth-child(odd) .frame__img { --ar: 3 / 1; }
 .project__body { display: grid; gap: 0.4rem; padding-inline: 0.25rem; }
 .project__summary { color: var(--ink-2); max-width: 54ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .project__tags { color: var(--ink-2); }
@@ -485,7 +494,9 @@ p { text-wrap: pretty; }
 
 .shot.is-missing .frame__img { display: grid; place-items: center; }
 .shot.is-missing img { display: none; }
-.shot.is-missing .frame__img::after { content: "Image missing: " attr(data-path); color: var(--ink-2); font: 0.8125rem var(--mono); padding: 1rem; }
+.shot.is-missing .frame__img { background: repeating-linear-gradient(135deg, transparent 0 14px, var(--line) 14px 15px), var(--surface); }
+.shot.is-missing .frame__img::after { content: "Image coming soon"; color: var(--ink-2); font: 500 0.9375rem var(--font); padding: 1rem; }
+.shot.is-missing .shot__btn { cursor: default; }
 
 .case__next {
   display: grid; gap: 0.5rem; margin-top: clamp(4rem, 8vw, 7rem); padding-block: 2rem clamp(3rem, 6vw, 5rem);

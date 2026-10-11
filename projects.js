@@ -157,6 +157,12 @@ window.PROJECTS = [
     ],
     outcome:
       'On the 50-second, 1,260-frame test video it found the lane in every frame and processed about 170 frames per second on a laptop. It read 455 frames as straight, 525 as curving right and 280 as curving left, with the tightest bend at a 559 m radius and the car never more than 0.64 m off-center.',
+    video: {
+      src: 'images/autonomous-robot/lane-overlay.mp4',
+      poster: 'images/autonomous-robot/lane-overlay-poster.jpg',
+      w: 800, h: 450,
+      caption: 'The full 50-second test video with the overlay running: lane lines, the midpoint path, and the curve radius and center offset updating every frame.',
+    },
     gallery: [
       { src: 'images/autonomous-robot/pipeline.png', caption: 'The four stages on one frame. In the bird’s-eye view, each yellow dot is the midpoint of a grey rung between the two lane curves.', w: 2000, h: 1250 },
       { src: 'images/autonomous-robot/before-after.png', caption: 'Raw frame and the finished overlay: left line in red, right line in blue, midpoint path in yellow, with the curve radius and offset.', w: 2000, h: 1250 },

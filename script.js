@@ -206,6 +206,20 @@ function renderCase(i) {
       <p class="case__lead">${esc(p.overview)}</p>
     </section>
 
+    ${p.video ? `
+    <section class="case__section case__section--wide" ${st()}>
+      <h2 class="case__h">Video</h2>
+      <figure class="shot">
+        <span class="frame"><span class="frame__img" style="--ar: ${p.video.w} / ${p.video.h}">
+          <video class="case__video" controls muted loop playsinline preload="none" poster="${esc(p.video.poster)}"
+            width="${p.video.w}" height="${p.video.h}" aria-label="${esc(p.video.caption)}">
+            <source src="${esc(p.video.src)}" type="video/mp4">
+          </video>
+        </span></span>
+        <figcaption>${esc(p.video.caption)}</figcaption>
+      </figure>
+    </section>` : ''}
+
     <section class="case__section" ${st()}>
       <h2 class="case__h">What I built</h2>
       <ul class="built">${p.built.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
@@ -227,9 +241,39 @@ function renderCase(i) {
       <span class="case__next-title">${esc(next.title)} ${icon('arrow-right')}</span>
     </a>`;
 
+  watchVideos();
   caseBody.dataset.images = JSON.stringify(images);
   caseScroll.scrollTop = 0;
   current = i;
+}
+
+// Project videos load only when scrolled to, play muted while visible, and
+// pause when scrolled away or the dialog closes. Controls are always shown.
+let videoObserver = null;
+function watchVideos() {
+  videoObserver?.disconnect();
+  const videos = caseBody.querySelectorAll('.case__video');
+  if (!videos.length) return;
+  videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(({ target: v, isIntersecting }) => {
+      if (isIntersecting) {
+        if (v.preload === 'none') { v.preload = 'auto'; v.load(); }
+        if (!reduced() && !v.dataset.userPaused) v.play().catch(() => {});
+      } else if (!v.paused) {
+        v.dataset.autoPause = '1';
+        v.pause();
+      }
+    });
+  }, { root: caseScroll, threshold: 0.5 });
+  videos.forEach((v) => {
+    // A pause the viewer made sticks; one we made on scroll-away doesn't
+    v.addEventListener('pause', () => {
+      if (v.dataset.autoPause) delete v.dataset.autoPause;
+      else v.dataset.userPaused = '1';
+    });
+    v.addEventListener('play', () => { delete v.dataset.userPaused; });
+    videoObserver.observe(v);
+  });
 }
 
 function setOrigin(x, y) {
@@ -275,6 +319,7 @@ function hideCase() {
     setOrigin(r.left + r.width / 2, Math.min(Math.max(r.top + r.height / 2, 0), innerHeight));
   }
   caseEl.classList.add('is-closing');
+  caseBody.querySelectorAll('.case__video').forEach((v) => { if (!v.paused) { v.dataset.autoPause = '1'; v.pause(); } });
   closeTimer = setTimeout(() => {
     caseEl.close();
     caseEl.classList.remove('is-closing');

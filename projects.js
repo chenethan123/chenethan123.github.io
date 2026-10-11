@@ -141,7 +141,7 @@ window.PROJECTS = [
       'A tracked robot with a webcam that finds the two lines of a lane, straight or curved, draws the midpoint path between them, and follows it.',
     role: 'Design & engineering',
     stack: ['Python', 'OpenCV', 'NumPy'],
-    links: [{ label: '234FinalGUI on GitHub', href: 'https://github.com/chenethan123/LaneOverlay/tree/main/234FinalGUI' }],
+    links: [{ label: 'GitHub', href: 'https://github.com/chenethan123/Autonomous-Robot/tree/main/LaneOverlay' }],
     cover: { src: 'images/autonomous-robot/cover.png', alt: 'The tracked robot with its webcam mast, next to a road frame with both lane lines, the midpoint path and the turn readout drawn on', w: 2000, h: 1000 },
     overview:
       'The goal was a robot that drives itself down a lane: see the two lines, work out the middle, and stay on it through straights and curves. The vision code turns every camera frame into a left line, a right line, a center path and a turn reading. The screenshots here run it on a public highway test video.',
